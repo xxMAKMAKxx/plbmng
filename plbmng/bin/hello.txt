@@ -1,0 +1,14 @@
+Hello, this is your first time running this program.
+First add your Plb username and password to conf file located in the bin folder.
+Please be advised that for proper run of this program you need following dependencies:
+
+fping
+pssh
+python 3 
+
+python packages:
+folium 
+pandas
+vincent
+numpy
+geocoder
