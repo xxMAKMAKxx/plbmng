@@ -4,15 +4,18 @@
 #For my Diploma thesis at Faculty of Electrical Engineering -- Brno, University of Technology
 
 
-import locale,os,re
+import locale,os,re,signal,sys
 from dialog import Dialog
 
 #Initial settings
 locale.setlocale(locale.LC_ALL, '')
 d = Dialog(dialog="dialog")
-d.set_background_title("Planetlab Server Manager")
+d.set_background_title("Planetlab Server Manager (v. 1.1)")
 
-#Main GUI function
+def signal_handler(sig, frame):
+    clear()
+    print('You pressed Ctrl+C!')
+    exit(0)
 
 def clear():
     os.system("clear")
@@ -24,7 +27,8 @@ def initInterface():
                            choices=[("1", "Access servers"),
                                     ("2", "Monitor servers"),
                                     ("3", "Plot servers on map"),
-                                    ("4", "Set credentials")],
+                                    ("4", "Set credentials"),
+                                    ("5", "About")],
                            title="MAIN MENU")
 
         if code == d.OK:
@@ -36,14 +40,47 @@ def initInterface():
                 monitorServersGui()
             #Plot servers on map
             elif(tag == "3"):
-                print("3")
+                plotServersOnMapGui()
             #Set crdentials
             elif(tag == "4"):
                 #TODO: re-design this
                 os.system("gedit bin/plbmng.conf")
+            elif(tag == "5"):
+                aboutGui()
         else:
             clear()
             exit(0)
+
+def aboutGui():
+    d.msgbox("""
+            Authors:
+                Tomas Andrasov
+                Filip Suba
+                doc. Ing. Dan Komosny Ph.D.
+                Martin Kacmarcik
+
+            Version 1.1
+            This application is under MIT license.
+            """, width=0, height=0, title="About")
+
+#Plot servers on map part of GUI
+def plotServersOnMapGui():
+    while True:
+        code, tag = d.menu("Choose one of the following options:",
+                           choices=[("1", "Generate map"),
+                                    ("2", "Select map elements")],
+                           title="Map menu")
+        if code == d.OK:
+            if(tag == "1"):
+                #TODO generate map func
+                print("TBD")
+            if(tag == "2"):
+                code, t = d.checklist(
+                          "Press SPACE key to choose map elements", height=0, width=0, list_height=0,
+                choices=[("1", "ICMP response", False),
+                         ("2", "SSH time", False) ],)
+        else:
+            return
 
 #Monitor servers part of GUI
 def monitorServersGui():
@@ -51,7 +88,7 @@ def monitorServersGui():
         code, tag = d.menu("Choose one of the following options:",
                            choices=[("1", "Set cron for monitoring"),
                                     ("2", "Set monitoring elements"),
-                                    ("3", "Monitor now")],
+                                    ("3", "Get nodes")],
                            title="Monitoring menu")
         if code == d.OK:
             if(tag == "1"):
@@ -132,34 +169,6 @@ def accessServersGui():
             return
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, signal_handler)
     initInterface()
     exit(0)
-
-
-# In pythondialog 3.x, you can compare the return code to d.OK, Dialog.OK or
-# "ok" (same object). In pythondialog 2.x, you have to use d.DIALOG_OK, which
-# is deprecated since version 3.0.0.
-if d.yesno("Are you REALLY sure you want to see this?") == d.OK:
-    d.msgbox("You have been warned...")
-
-    # We could put non-empty items here (not only the tag for each entry)
-    code, tags = d.checklist("What sandwich toppings do you like?",
-                             choices=[("Catsup", "",             False),
-                                      ("Mustard", "",            False),
-                                      ("Pesto", "",              False),
-                                      ("Mayonnaise", "",         True),
-                                      ("Horse radish","",        True),
-                                      ("Sun-dried tomatoes", "", True)],
-                             title="Do you prefer ham or spam?",
-                             backtitle="And now, for something "
-                             "completely different...")
-    if code == d.OK:
-        # 'tags' now contains a list of the toppings chosen by the user
-        pass
-else:
-    code, tag = d.menu("OK, then you have two options:",
-                       choices=[("(1)", "Leave this fascinating example"),
-                                ("(2)", "Leave this fascinating example")])
-    if code == d.OK:
-        # 'tag' is now either "(1)" or "(2)"
-        pass
