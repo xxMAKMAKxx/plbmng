@@ -4,7 +4,7 @@
 #For my Diploma thesis at Faculty of Electrical Engineering -- Brno, University of Technology
 
 
-import locale
+import locale,os,re
 from dialog import Dialog
 
 #Initial settings
@@ -14,24 +14,39 @@ d.set_background_title("Planetlab server manager")
 
 #Main GUI function
 
-def initInterface():
-    code, tag = d.menu("Choose one of the following options:",
-                       choices=[("1", "Access servers"),
-                                ("2", "Measure servers"),
-                                ("3", "Plot servers on map")],
-                       title="MAIN MENU")
+def clear():
+    os.system("clear")
 
-    if code == d.OK:
-        print(tag)
-        print(type(tag))
-        if(tag == "1"):
-            print("1")
-        elif(tag == "2"):
-            print("2")
+def initInterface():
+    while True:
+        code, tag = d.menu("Choose one of the following options:",
+                           choices=[("1", "Access servers"),
+                                    ("2", "Measure servers"),
+                                    ("3", "Plot servers on map")],
+                           title="MAIN MENU")
+
+        if code == d.OK:
+            if(tag == "1"):
+                code, tag = d.menu("Choose one of the following options:",
+                           choices=[("1", "Serach by DNS"),
+                                    ("2", "Search by IP"),
+                                    ("3", "Search by location")],
+                           title="ACCESS SERVERS")
+                if code == d.OK:
+                    code, answer = d.inputbox("Search for:",title="Search")
+                    if code == d.OK:
+                        print("lol")
+                    else:
+                        continue
+                else:
+                    continue
+            elif(tag == "2"):
+                print("2")
+            elif(tag == "#"):
+                print("3")
         else:
-            print("error")
-    else:
-        print("Error")
+            clear()
+            exit(0)
 
 if __name__ == "__main__":
     initInterface()
