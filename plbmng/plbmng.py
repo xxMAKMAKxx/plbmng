@@ -7,6 +7,13 @@
 import locale,os,re,signal,sys
 from dialog import Dialog
 
+#Constant definition
+OPTION_DNS=2
+OPTION_IP=1
+OPTION_LOCATION=0
+OPTION_CONTINENT=3
+OPTION_COUNTRY=4
+
 #Initial settings
 locale.setlocale(locale.LC_ALL, '')
 d = Dialog(dialog="dialog")
@@ -19,6 +26,90 @@ def signal_handler(sig, frame):
 
 def clear():
     os.system("clear")
+
+def getNodes(nodeFile=None):
+    if nodeFile == None:
+        nodeFile='default.node'
+    nodes=[]
+    with open(nodeFile, 'r') as defaultNodeFile:
+        lines=defaultNodeFile.readlines()[1:]
+        for line in lines:
+            nodes.append(line.strip().split())
+    return nodes
+
+#options: 1 is IP, 2 is DNS, 0 is location
+def searchNodes(option,regex=None):
+    nodes = getNodes()
+    answers = []
+    choices=[]
+    counter=1
+    #parse data based on incoming regex
+    if option != 0:
+        for item in nodes:
+            if re.search(regex,item[option]):
+                answers.append(item)
+        if len(answers) == 0:
+            searchNodesGui(False)
+        else:
+            #prepare choices for GUI
+            for item in answers:
+                choices.append((str(counter),item[option]))
+                counter+=1
+            searchNodesGui(choices)
+    else:
+        for item in nodes:
+            answers.append(item[OPTION_CONTINENT])
+        continents=sorted(set(answers))
+        #prepare choices for GUI
+        for item in continents:
+            choices.append((str(counter),item))
+            counter+=1
+        returnedChoice=searchNodesGui(choices)
+        answers=[]
+        choices=[]
+        counter=1
+        for item in nodes:
+            if re.search(continents[int(returnedChoice)-1],item[OPTION_CONTINENT]):
+                answers.append(item[OPTION_COUNTRY])
+        countries=sorted(set(answers))
+        #prepare choices for GUI
+        for item in countries:
+            choices.append((str(counter),item))
+            counter+=1
+        returnedChoice=searchNodesGui(choices)
+        answers=[]
+        choices=[]
+        counter=1
+        for item in nodes:
+            if re.search(countries[int(returnedChoice)-1],item[OPTION_COUNTRY]):
+                answers.append(item[OPTION_DNS])
+        hostnames=sorted(set(answers))
+        #prepare choices for GUI
+        for item in hostnames:
+            choices.append((str(counter),item))
+            counter+=1
+        returnedChoice=searchNodesGui(choices)
+    #TODO: call the server info dialog 
+
+
+
+
+###################
+#  GUI functions  #
+###################
+
+def searchNodesGui(prepared_choices):
+    if not prepared_choices:
+        d.msgbox("No results found.", width=0,height=0)
+        return
+    while True:
+        code, tag = d.menu("These are the results:",
+                               choices=prepared_choices,
+                               title="Search results")
+        if code == d.OK:
+            return tag
+        else:
+            return
 
 def initInterface():
     while True:
@@ -53,10 +144,11 @@ def initInterface():
 
 def aboutGui():
     d.msgbox("""
+            Project supervisor:
+                Dan Komosny
             Authors:
                 Tomas Andrasov
                 Filip Suba
-                doc. Ing. Dan Komosny Ph.D.
                 Martin Kacmarcik
 
             Version 1.1
@@ -147,7 +239,7 @@ def accessServersGui():
                 code, answer = d.inputbox("Search for:",title="Search")
                 if code == d.OK:
                     #TODO func
-                    print("lol")
+                    searchNodes(OPTION_DNS,answer)
                 else:
                     continue
             #Search by IP
@@ -155,15 +247,14 @@ def accessServersGui():
                 code, answer = d.inputbox("Search for:",title="Search")
                 if code == d.OK:
                     #TODO func
-                    print("tbd")
+                    searchNodes(OPTION_IP,answer)
                 else:
                     continue
             #Search by location
             elif(tag == "3"):
                 #TODO func for search by func
                 #Grepuje se default node
-                print("tbd")
-
+                searchNodes(OPTION_LOCATION)
 
         else:
             return
