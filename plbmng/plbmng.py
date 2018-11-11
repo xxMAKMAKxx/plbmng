@@ -4,9 +4,10 @@
 #For my Diploma thesis at Faculty of Electrical Engineering -- Brno, University of Technology
 
 
-import locale,os,re,signal,sys,subprocess,paramiko
+import locale,os,re,signal,sys,subprocess,paramiko,socket,folium,webbrowser
 from dialog import Dialog
 from platform   import system
+from paramiko.ssh_exception import BadHostKeyException, AuthenticationException, SSHException
 
 #Constant definition
 OPTION_LOCATION=0
@@ -53,14 +54,16 @@ def testPing(target):
 
 def testSsh(target):
     ssh = paramiko.SSHClient()
-    user='cesnetple_vut_utko'
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    user=getSshUser()
     key=getSshKey()
     try:
-        ssh.connect(target, username=user, key_filename=key)
+        ssh.connect(target, username=user, key_filename=key,timeout=3)
         return True
     except (BadHostKeyException, AuthenticationException, 
         SSHException, socket.error) as e:
         print(e)
+        return False
     exit(0)
 
 def getSshKey():
@@ -69,8 +72,18 @@ def getSshKey():
     with open ("bin/plbmng.conf",'r') as config:
         for line in config:
             if(re.search('SSH_KEY',line)):
-                sshPath=re.sub('SSH_KEY=','',line)
+                sshPath=(re.sub('SSH_KEY=','',line)).rstrip()
     return sshPath
+
+def getSshUser():
+    user=""
+    #TODO remove the static path
+    with open ("bin/plbmng.conf",'r') as config:
+        for line in config:
+            if(re.search('SLICE=',line)):
+                user=(re.sub('SLICE=','',line)).rstrip()
+    return user
+
 
 def getNodes(nodeFile=None):
     if nodeFile == None:
@@ -109,6 +122,8 @@ def searchNodes(option,regex=None):
             choices.append((str(counter),item))
             counter+=1
         returnedChoice=searchNodesGui(choices)
+        if returnedChoice == None:
+            return
         answers=[]
         choices=[]
         counter=1
@@ -121,6 +136,8 @@ def searchNodes(option,regex=None):
             choices.append((str(counter),item))
             counter+=1
         returnedChoice=searchNodesGui(choices)
+        if returnedChoice == None:
+            return
         answers=[]
         choices=[]
         counter=1
@@ -137,9 +154,41 @@ def searchNodes(option,regex=None):
         return
     else:
         returnedChoice,chosenNode = getServerInfo(choices[int(returnedChoice)-1][1], option, nodes)
-    print(returnedChoice)
-    print(chosenNode)
-    exit(0)
+    if(returnedChoice == None):
+        return
+    elif(int(returnedChoice) == 1):
+        connect()
+    elif(int(returnedChoice) == 2):
+        connect()
+    elif(int(returnedChoice) == 3):
+        showOnMap(chosenNode)
+
+def connect():
+    print('tbd')
+
+def showOnMap(node):
+    _stderr = os.dup(2)
+    os.close(2)
+    _stdout = os.dup(1)
+    os.close(1)
+    fd = os.open(os.devnull, os.O_RDWR)
+    os.dup2(fd, 2)
+    os.dup2(fd, 1)
+    latitude = float(node[-2])
+    longitude = float(node[-1])
+    name = node[OPTION_DNS]
+
+    map = folium.Map(location=[latitude, longitude],
+                       zoom_start=2)
+    folium.Marker([latitude, longitude], popup=name).add_to(map)
+    map.save('/tmp/map_plbmng.html')
+    try:
+        webbrowser.get().open('file://' + os.path.realpath('/tmp/map_plbmng.html'))
+    finally:
+        os.close(fd)
+        os.dup2(_stderr, 2)
+        os.dup2(_stdout, 1)
+
 
 
 def getServerInfo(serverId,option,nodes=None):
@@ -192,7 +241,7 @@ def getInfoFromNode(node):
 def printServerInfo(chosenOne):
     region,city,url,fullname,lat,lon = getInfoFromNode(chosenOne)
     icmp=testPing(chosenOne[OPTION_IP])
-    sshAvailable=""
+    sshAvailable=testSsh(chosenOne[OPTION_IP])
     text="""
         NODE: %s
         IP: %s
@@ -205,7 +254,7 @@ def printServerInfo(chosenOne):
         LATITUDE: %s
         LONGITUDE: %s
         ICMP RESPOND: %s ms
-        SSH AVAILABLE: TODO
+        SSH AVAILABLE: %r
         """ %  (chosenOne[OPTION_DNS], 
                 chosenOne[OPTION_IP], 
                 chosenOne[OPTION_CONTINENT],
@@ -216,7 +265,8 @@ def printServerInfo(chosenOne):
                 fullname,
                 lat,
                 lon,
-                icmp)
+                icmp,
+                sshAvailable)
 
     preparedChoices=[("1","Connect via SSH"),
                      ("2", "Connect via MC"),
@@ -225,7 +275,7 @@ def printServerInfo(chosenOne):
     if code == d.OK:
         return tag
     else:
-        return
+        return None
 
 def searchNodesGui(prepared_choices):
     if not prepared_choices:
@@ -396,7 +446,5 @@ def accessServersGui():
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
-    testSsh('139.30.241.192')
-    exit(0)
     initInterface()
     exit(0)
