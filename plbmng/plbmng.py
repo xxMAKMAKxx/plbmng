@@ -58,7 +58,7 @@ def testSsh(target):
     user=getSshUser()
     key=getSshKey()
     try:
-        ssh.connect(target, username=user, key_filename=key,timeout=3)
+        ssh.connect(target, username=user, key_filename=key,timeout=2)
         return True
     except (BadHostKeyException, AuthenticationException, 
         SSHException, socket.error) as e:
@@ -157,14 +157,24 @@ def searchNodes(option,regex=None):
     if(returnedChoice == None):
         return
     elif(int(returnedChoice) == 1):
-        connect()
+        connect(int(returnedChoice),chosenNode)
     elif(int(returnedChoice) == 2):
-        connect()
+        connect(int(returnedChoice),chosenNode)
     elif(int(returnedChoice) == 3):
         showOnMap(chosenNode)
 
-def connect():
-    print('tbd')
+def connect(mode,node):
+    clear()
+    key = getSshKey()
+    user = getSshUser()
+    if(mode == 1):
+        os.system("ssh -o \"StrictHostKeyChecking=no\" -o \"UserKnownHostsFile=/dev/null\" -i "+key+" "+user+"@"+node[OPTION_IP])
+    elif(mode ==2 ):
+        os.system("mc sh://"+user+"@"+node[OPTION_IP]+":/home")
+    else:
+        return
+
+
 
 def showOnMap(node):
     _stderr = os.dup(2)
@@ -216,7 +226,14 @@ def getInfoFromNode(node):
             url=node[counter]
             counter+=1
             break
+        elif(re.search('www',node[counter+1])):
+            city=node[counter]
+            counter+=1
+            url=node[counter]
+            counter+=1
+            break
         else:
+
             if isFirst:
                 isFirst=False
             else:
