@@ -4,8 +4,9 @@
 #For my Diploma thesis at Faculty of Electrical Engineering -- Brno, University of Technology
 
 
-import locale,os,re,signal,sys
+import locale,os,re,signal,sys,subprocess,paramiko
 from dialog import Dialog
+from platform   import system
 
 #Constant definition
 OPTION_LOCATION=0
@@ -33,6 +34,44 @@ def signal_handler(sig, frame):
 def clear():
     os.system("clear")
 
+def testPing(target):
+    if system().lower()=='windows':
+        pingParam='-n'
+    else:
+        pingParam='-c'
+    command = ['ping', pingParam, '1', target]
+    p = subprocess.Popen(command, stdout = subprocess.PIPE)
+    if system().lower()=='windows':
+        avg=re.compile('Average = ([0-9]+)ms')
+    else:
+        avg=re.compile('min/avg/max/mdev = [0-9.]+/([0-9.]+)/[0-9.]+/[0-9.]+')
+    avgStr=avg.findall(str(p.communicate()[0]))
+    if(p.returncode != 0):
+        return "N/A"
+    p.kill()
+    return avgStr[0]
+
+def testSsh(target):
+    ssh = paramiko.SSHClient()
+    user='cesnetple_vut_utko'
+    key=getSshKey()
+    try:
+        ssh.connect(target, username=user, key_filename=key)
+        return True
+    except (BadHostKeyException, AuthenticationException, 
+        SSHException, socket.error) as e:
+        print(e)
+    exit(0)
+
+def getSshKey():
+    sshPath=""
+    #TODO remove the static path
+    with open ("bin/plbmng.conf",'r') as config:
+        for line in config:
+            if(re.search('SSH_KEY',line)):
+                sshPath=re.sub('SSH_KEY=','',line)
+    return sshPath
+
 def getNodes(nodeFile=None):
     if nodeFile == None:
         nodeFile='default.node'
@@ -43,7 +82,6 @@ def getNodes(nodeFile=None):
             nodes.append(line.strip().split())
     return nodes
 
-#options: 1 is IP, 2 is DNS, 0 is location
 def searchNodes(option,regex=None):
     nodes = getNodes()
     answers = []
@@ -55,7 +93,7 @@ def searchNodes(option,regex=None):
             if re.search(regex,item[option]):
                 answers.append(item)
         if len(answers) == 0:
-            searchNodesGui(False)
+            returnedChoice=searchNodesGui(False)
         else:
             #prepare choices for GUI
             for item in answers:
@@ -95,9 +133,13 @@ def searchNodes(option,regex=None):
             choices.append((str(counter),item))
             counter+=1
         returnedChoice=searchNodesGui(choices)
-    #TODO: call the server info dialog 
-    #TODO: finish other two choices, need to get returnedChoice
-    returnedChoice = getServerInfo(choices[int(returnedChoice)-1][1], option, nodes)
+    if(returnedChoice == None):
+        return
+    else:
+        returnedChoice,chosenNode = getServerInfo(choices[int(returnedChoice)-1][1], option, nodes)
+    print(returnedChoice)
+    print(chosenNode)
+    exit(0)
 
 
 def getServerInfo(serverId,option,nodes=None):
@@ -110,7 +152,7 @@ def getServerInfo(serverId,option,nodes=None):
             if re.search(serverId,item[option]):
                 chosenOne=item
                 break
-        return printServerInfo(chosenOne)
+        return printServerInfo(chosenOne),chosenOne
 
 
 def getInfoFromNode(node):
@@ -149,6 +191,8 @@ def getInfoFromNode(node):
 
 def printServerInfo(chosenOne):
     region,city,url,fullname,lat,lon = getInfoFromNode(chosenOne)
+    icmp=testPing(chosenOne[OPTION_IP])
+    sshAvailable=""
     text="""
         NODE: %s
         IP: %s
@@ -160,7 +204,7 @@ def printServerInfo(chosenOne):
         FULL NAME: %s
         LATITUDE: %s
         LONGITUDE: %s
-        ICMP RESPOND: XYZ
+        ICMP RESPOND: %s ms
         SSH AVAILABLE: TODO
         """ %  (chosenOne[OPTION_DNS], 
                 chosenOne[OPTION_IP], 
@@ -171,7 +215,8 @@ def printServerInfo(chosenOne):
                 url,
                 fullname,
                 lat,
-                lon)
+                lon,
+                icmp)
 
     preparedChoices=[("1","Connect via SSH"),
                      ("2", "Connect via MC"),
@@ -185,7 +230,7 @@ def printServerInfo(chosenOne):
 def searchNodesGui(prepared_choices):
     if not prepared_choices:
         d.msgbox("No results found.", width=0,height=0)
-        return
+        return None
     while True:
         code, tag = d.menu("These are the results:",
                                choices=prepared_choices,
@@ -193,7 +238,7 @@ def searchNodesGui(prepared_choices):
         if code == d.OK:
             return tag
         else:
-            return
+            return None
 
 def initInterface():
     while True:
@@ -351,5 +396,7 @@ def accessServersGui():
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
+    testSsh('139.30.241.192')
+    exit(0)
     initInterface()
     exit(0)
