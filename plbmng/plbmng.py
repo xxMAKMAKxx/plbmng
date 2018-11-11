@@ -199,6 +199,29 @@ def showOnMap(node):
         os.dup2(_stderr, 2)
         os.dup2(_stdout, 1)
 
+def plotServersOnMap(mode):
+    _stderr = os.dup(2)
+    os.close(2)
+    _stdout = os.dup(1)
+    os.close(1)
+    fd = os.open(os.devnull, os.O_RDWR)
+    os.dup2(fd, 2)
+    os.dup2(fd, 1)
+    if(int(mode)==1):
+        os.system("python3 python_scripts/icmp_map.py")
+        mapFile="map_icmp.html"
+    elif(int(mode)==2):
+        os.system("python3 python_scripts/ssh_map.py")
+        mapFile="map_ssh.html"
+    else:
+        os.system("python3 python_scripts/full_map.py")
+        mapFile="map_full.html"
+    try:
+        webbrowser.get().open('file://' + os.path.realpath(mapFile))
+    finally:
+        os.close(fd)
+        os.dup2(_stderr, 2)
+        os.dup2(_stdout, 1)
 
 
 def getServerInfo(serverId,option,nodes=None):
@@ -361,18 +384,17 @@ def aboutGui():
 def plotServersOnMapGui():
     while True:
         code, tag = d.menu("Choose one of the following options:",
-                           choices=[("1", "Generate map"),
-                                    ("2", "Select map elements")],
+                           choices=[("1", "Generate ICMP map"),
+                                    ("2", "Generate SSH map"),
+                                    ("3", "Generate full map")],
                            title="Map menu")
         if code == d.OK:
             if(tag == "1"):
-                #TODO generate map func
-                print("TBD")
+                plotServersOnMap(1)
             if(tag == "2"):
-                code, t = d.checklist(
-                          "Press SPACE key to choose map elements", height=0, width=0, list_height=0,
-                choices=[("1", "ICMP response", False),
-                         ("2", "SSH time", False) ],)
+                plotServersOnMap(2)
+            if(tag == "3"):
+                plotServersOnMap(3)
         else:
             return
 
