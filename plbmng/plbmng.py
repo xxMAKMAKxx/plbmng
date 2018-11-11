@@ -84,6 +84,23 @@ def getSshUser():
                 user=(re.sub('SLICE=','',line)).rstrip()
     return user
 
+def getUser():
+    user=""
+    #TODO remove the static path
+    with open ("bin/plbmng.conf",'r') as config:
+        for line in config:
+            if(re.search('USERNAME=',line)):
+                user=(re.sub('USERNAME=','',line)).rstrip()
+    return user
+
+def getPasswd():
+    passwd=""
+    #TODO remove the static path
+    with open ("bin/plbmng.conf",'r') as config:
+        for line in config:
+            if(re.search('PASSWORD=',line)):
+                passwd=(re.sub('PASSWORD=','',line)).rstrip()
+    return passwd
 
 def getNodes(nodeFile=None):
     if nodeFile == None:
@@ -94,6 +111,14 @@ def getNodes(nodeFile=None):
         for line in lines:
             nodes.append(line.strip().split())
     return nodes
+
+def getAllNodes():
+    user=getUser()
+    passwd=getPasswd()
+    if(user != "") and (passwd != ""):
+        os.system("python3 python_scripts/planetlab_list_creator.py -u \""+user+"\" -p \""+passwd+"\" -o ./")
+    else:
+        needToFillPasswdFirstInfo()
 
 def searchNodes(option,regex=None):
     nodes = getNodes()
@@ -330,6 +355,10 @@ def searchNodesGui(prepared_choices):
         else:
             return None
 
+def needToFillPasswdFirstInfo():
+    d.msgbox("Credentials are not set. Please go to menu and set them now")
+    return
+
 def initInterface():
     while True:
         #Main menu
@@ -390,11 +419,14 @@ def plotServersOnMapGui():
                            title="Map menu")
         if code == d.OK:
             if(tag == "1"):
-                plotServersOnMap(1)
+                plotServersOnMap(tag)
+                return
             if(tag == "2"):
-                plotServersOnMap(2)
+                plotServersOnMap(tag)
+                return
             if(tag == "3"):
-                plotServersOnMap(3)
+                plotServersOnMap(tag)
+                return
         else:
             return
 
@@ -441,8 +473,7 @@ def monitorServersGui():
                         ("3", "Skip non responsive servers", False) ],)
             elif(tag == "3"):
                 if d.yesno("This is going to take around 20 minutes") == d.OK:
-                    #TBD func
-                    print("TBD")
+                    getAllNodes()
                 else:
                     continue
         else:
