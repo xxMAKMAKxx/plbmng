@@ -8,11 +8,17 @@ import locale,os,re,signal,sys
 from dialog import Dialog
 
 #Constant definition
-OPTION_DNS=2
-OPTION_IP=1
 OPTION_LOCATION=0
+OPTION_IP=1
+OPTION_DNS=2
 OPTION_CONTINENT=3
 OPTION_COUNTRY=4
+OPTION_REGION=5
+OPTION_CITY=6
+OPTION_URL=7
+OPTION_NAME=8
+OPTION_LAT=9
+OPTION_LON=10
 
 #Initial settings
 locale.setlocale(locale.LC_ALL, '')
@@ -55,7 +61,7 @@ def searchNodes(option,regex=None):
             for item in answers:
                 choices.append((str(counter),item[option]))
                 counter+=1
-            searchNodesGui(choices)
+            returnedChoice=searchNodesGui(choices)
     else:
         for item in nodes:
             answers.append(item[OPTION_CONTINENT])
@@ -90,13 +96,91 @@ def searchNodes(option,regex=None):
             counter+=1
         returnedChoice=searchNodesGui(choices)
     #TODO: call the server info dialog 
+    #TODO: finish other two choices, need to get returnedChoice
+    returnedChoice = getServerInfo(choices[int(returnedChoice)-1][1], option, nodes)
 
 
+def getServerInfo(serverId,option,nodes=None):
+    if nodes == None:
+        nodes = getNodes()
+    if option == 0:
+        option=OPTION_DNS
+    if isinstance(serverId,str):
+        for item in nodes:
+            if re.search(serverId,item[option]):
+                chosenOne=item
+                break
+        return printServerInfo(chosenOne)
 
+
+def getInfoFromNode(node):
+    region=""
+    fullname=""
+    counter=OPTION_REGION
+    isFirst=True
+    while(True):
+        if(re.search('http://',node[counter+1])):
+            city=node[counter]
+            counter+=1
+            url=node[counter]
+            counter+=1
+            break
+        else:
+            if isFirst:
+                isFirst=False
+            else:
+                region+=" "
+            region+=node[counter]
+        counter+=1
+    while(True):
+        if(counter == (len(node)-2)):
+            lat=node[counter]
+            lon=node[counter+1]
+            break
+        else:
+            fullname+=node[counter]
+            fullname+=" "
+            counter+=1
+    return region,city,url,fullname,lat,lon
 
 ###################
 #  GUI functions  #
 ###################
+
+def printServerInfo(chosenOne):
+    region,city,url,fullname,lat,lon = getInfoFromNode(chosenOne)
+    text="""
+        NODE: %s
+        IP: %s
+        CONTINENT: %s
+        COUNTRY: %s
+        REGION: %s
+        CITY: %s
+        URL: %s
+        FULL NAME: %s
+        LATITUDE: %s
+        LONGITUDE: %s
+        ICMP RESPOND: XYZ
+        SSH AVAILABLE: TODO
+        """ %  (chosenOne[OPTION_DNS], 
+                chosenOne[OPTION_IP], 
+                chosenOne[OPTION_CONTINENT],
+                chosenOne[OPTION_COUNTRY],
+                region,
+                city,
+                url,
+                fullname,
+                lat,
+                lon)
+
+    preparedChoices=[("1","Connect via SSH"),
+                     ("2", "Connect via MC"),
+                     ("3", "Show on map")]
+    code, tag = d.menu(text, height=0, width=0, menu_height=0, choices=preparedChoices)
+    if code == d.OK:
+        return tag
+    else:
+        return
 
 def searchNodesGui(prepared_choices):
     if not prepared_choices:
@@ -134,13 +218,19 @@ def initInterface():
                 plotServersOnMapGui()
             #Set crdentials
             elif(tag == "4"):
-                #TODO: re-design this
-                os.system("gedit bin/plbmng.conf")
+                setCredentialasGui()
             elif(tag == "5"):
                 aboutGui()
         else:
             clear()
             exit(0)
+
+def setCredentialasGui():
+    code,text = d.editbox('bin/plbmng.conf',height=0, width=0)
+    if(code == d.OK):
+        with open('bin/plbmng.conf', "w") as configFile:
+            configFile.write(text)
+
 
 def aboutGui():
     d.msgbox("""
