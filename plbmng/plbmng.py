@@ -370,6 +370,7 @@ def needToFillPasswdFirstInfo():
     return
 
 def initInterface():
+    signal.signal(signal.SIGINT, signal_handler)
     while True:
         #Main menu
         code, tag = d.menu("Choose one of the following options:",
@@ -523,6 +524,5 @@ def accessServersGui():
             return
 
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, signal_handler)
     initInterface()
     exit(0)
