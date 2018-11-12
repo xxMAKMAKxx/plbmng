@@ -69,8 +69,7 @@ def testSsh(target):
 
 def getSshKey():
     sshPath=""
-    #TODO remove the static path
-    with open ("bin/plbmng.conf",'r') as config:
+    with open (path+"/bin/plbmng.conf",'r') as config:
         for line in config:
             if(re.search('SSH_KEY',line)):
                 sshPath=(re.sub('SSH_KEY=','',line)).rstrip()
@@ -78,8 +77,7 @@ def getSshKey():
 
 def getSshUser():
     user=""
-    #TODO remove the static path
-    with open ("bin/plbmng.conf",'r') as config:
+    with open (path+"/bin/plbmng.conf",'r') as config:
         for line in config:
             if(re.search('SLICE=',line)):
                 user=(re.sub('SLICE=','',line)).rstrip()
@@ -87,8 +85,7 @@ def getSshUser():
 
 def getUser():
     user=""
-    #TODO remove the static path
-    with open ("bin/plbmng.conf",'r') as config:
+    with open (path+"/bin/plbmng.conf",'r') as config:
         for line in config:
             if(re.search('USERNAME=',line)):
                 user=(re.sub('USERNAME=','',line)).rstrip()
@@ -96,8 +93,7 @@ def getUser():
 
 def getPasswd():
     passwd=""
-    #TODO remove the static path
-    with open ("bin/plbmng.conf",'r') as config:
+    with open (path+"/bin/plbmng.conf",'r') as config:
         for line in config:
             if(re.search('PASSWORD=',line)):
                 passwd=(re.sub('PASSWORD=','',line)).rstrip()
@@ -233,6 +229,7 @@ def plotServersOnMap(mode):
     fd = os.open(os.devnull, os.O_RDWR)
     os.dup2(fd, 2)
     os.dup2(fd, 1)
+    os.system("cat "+path+"/default.node | awk 'NR>1' |sort| uniq| cut -f10,11,3 | sort -k2 -u > "+path+"/python_scripts/base_data.txt")
     if(int(mode)==1):
         os.system("python3 python_scripts/icmp_map.py")
         mapFile="map_icmp.html"
@@ -243,7 +240,7 @@ def plotServersOnMap(mode):
         os.system("python3 python_scripts/full_map.py")
         mapFile="map_full.html"
     try:
-        webbrowser.get().open('file://' + os.path.realpath(mapFile))
+        webbrowser.get().open('file://' + os.path.realpath(path+"/"+mapFile))
     finally:
         os.close(fd)
         os.dup2(_stderr, 2)
