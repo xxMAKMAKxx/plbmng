@@ -26,6 +26,7 @@ OPTION_LON=10
 locale.setlocale(locale.LC_ALL, '')
 d = Dialog(dialog="dialog")
 d.set_background_title("Planetlab Server Manager (v. 1.1)")
+path=os.getcwd()
 
 def signal_handler(sig, frame):
     clear()
@@ -299,6 +300,18 @@ def getInfoFromNode(node):
             counter+=1
     return region,city,url,fullname,lat,lon
 
+def removeCron():
+    os.system("crontab -l | grep -v cron_script | crontab -")
+
+def addToCron(mode):
+    if(int(mode) == 2):
+        line="@daily "+path+"/cron_script.sh"
+    elif(int(mode)==3):
+        line="@weekly "+path+"/cron_script.sh"
+    elif(int(mode)==4):
+        line="@monthly "+path+"/cron_script.sh"
+    os.system("echo \"$(crontab -l ; echo "+line+")\" | crontab -")
+
 ###################
 #  GUI functions  #
 ###################
@@ -449,20 +462,18 @@ def monitorServersGui():
                                title="Crontab menu")
                 if code == d.OK:
                     if(tag == "1"):
-                        #TODO func
-                        print("TBD")
+                        if d.yesno("This is going to take around 20 minutes") == d.OK:
+                            getAllNodes()
+                        else:
+                            continue
                     elif(tag == "2"):
-                        #TODO func
-                        print("TBD")
+                        addToCron(tag)
                     elif(tag == "3"):
-                        #TODO func
-                        print("TBD")
+                        addToCron(tag)
                     elif(tag == "4"):
-                        #TODO func
-                        print("TBD")
+                        addToCron(tag)
                     elif(tag == "5"):
-                        #TODO func
-                        print("TBD")
+                        removeCron()
                 else:
                     continue
             elif(tag == "2"):
