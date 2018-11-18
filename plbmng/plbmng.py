@@ -26,15 +26,29 @@ OPTION_LON=10
 locale.setlocale(locale.LC_ALL, '')
 d = Dialog(dialog="dialog")
 d.set_background_title("Planetlab Server Manager (v. 1.1)")
-path=os.getcwd()
+path=""
 
 def signal_handler(sig, frame):
     clear()
     print('You pressed Ctrl+C!')
     exit(0)
 
+def getPath():
+    global path
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
+    pythonVersionCmd="ls ../lib | grep python3"
+    if(os.path.exists("../lib")):
+        pythonVersion = subprocess.check_output(pythonVersionCmd, shell=True)
+        path="../lib/"+pythonVersion+"/site-packages/plbmng"
+    else:
+        path=os.getcwd()
+
 def clear():
     os.system("clear")
+
+def crontabScript():
+    os.system(path+'/cron_script.sh')
+    exit(0)
 
 def testPing(target):
     if system().lower()=='windows':
@@ -101,7 +115,7 @@ def getPasswd():
 
 def getNodes(nodeFile=None):
     if nodeFile == None:
-        nodeFile='default.node'
+        nodeFile=path+'/default.node'
     nodes=[]
     with open(nodeFile, 'r') as defaultNodeFile:
         lines=defaultNodeFile.readlines()[1:]
@@ -113,7 +127,7 @@ def getAllNodes():
     user=getUser()
     passwd=getPasswd()
     if(user != "") and (passwd != ""):
-        os.system("python3 python_scripts/planetlab_list_creator.py -u \""+user+"\" -p \""+passwd+"\" -o ./")
+        os.system("myPwd=$(pwd); cd "+path+"; python3 python_scripts/planetlab_list_creator.py -u \""+user+"\" -p \""+passwd+"\" -o ./; cd $(echo $myPwd)")
     else:
         needToFillPasswdFirstInfo()
 
@@ -231,13 +245,13 @@ def plotServersOnMap(mode):
     os.dup2(fd, 1)
     os.system("cat "+path+"/default.node | awk 'NR>1' |sort| uniq| cut -f10,11,3 | sort -k2 -u > "+path+"/python_scripts/base_data.txt")
     if(int(mode)==1):
-        os.system("python3 python_scripts/icmp_map.py")
+        os.system("myPwd=$(pwd); cd "+path+"; python3 python_scripts/icmp_map.py; cd $(echo $myPwd)")
         mapFile="map_icmp.html"
     elif(int(mode)==2):
-        os.system("python3 python_scripts/ssh_map.py")
+        os.system("myPwd=$(pwd); cd "+path+"; python3 python_scripts/ssh_map.py; cd $(echo $myPwd)")
         mapFile="map_ssh.html"
     else:
-        os.system("python3 python_scripts/full_map.py")
+        os.system("myPwd=$(pwd); cd "+path+"; python3 python_scripts/full_map.py; cd $(echo $myPwd)")
         mapFile="map_full.html"
     try:
         webbrowser.get().open('file://' + os.path.realpath(path+"/"+mapFile))
@@ -298,15 +312,15 @@ def getInfoFromNode(node):
     return region,city,url,fullname,lat,lon
 
 def removeCron():
-    os.system("crontab -l | grep -v cron_script | crontab -")
+    os.system("crontab -l | grep -v plbmng\ crontab | crontab -")
 
 def addToCron(mode):
     if(int(mode) == 2):
-        line="@daily "+path+"/cron_script.sh"
+        line="@daily plbmng crontab"
     elif(int(mode)==3):
-        line="@weekly "+path+"/cron_script.sh"
+        line="@weekly plbmng crontab"
     elif(int(mode)==4):
-        line="@monthly "+path+"/cron_script.sh"
+        line="@monthly plbmng crontab"
     os.system("echo \"$(crontab -l ; echo "+line+")\" | crontab -")
 
 ###################
@@ -370,6 +384,7 @@ def needToFillPasswdFirstInfo():
     return
 
 def initInterface():
+    getPath()
     signal.signal(signal.SIGINT, signal_handler)
     while True:
         #Main menu
@@ -401,9 +416,9 @@ def initInterface():
             exit(0)
 
 def setCredentialasGui():
-    code,text = d.editbox('bin/plbmng.conf',height=0, width=0)
+    code,text = d.editbox(path+'/bin/plbmng.conf',height=0, width=0)
     if(code == d.OK):
-        with open('bin/plbmng.conf', "w") as configFile:
+        with open(path+'/bin/plbmng.conf', "w") as configFile:
             configFile.write(text)
 
 

@@ -2,11 +2,11 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-install_requires = ['vincent', 'folium', 'numpy', 'pandas', 'geocoder']
+install_requires = ['vincent', 'folium', 'numpy', 'pandas', 'geocoder', 'paramiko']
 
 setup(name='plbmng',
       description='Tool for monitoring PlanetLab network',
-      version="0.1.9",
+      version="0.1.10",
       license='MIT',
       packages=find_packages(),
       package_data={},
@@ -18,5 +18,6 @@ setup(name='plbmng',
       author_email='xandra03@stud.feec.vutbr.cz',
       # maintainer='Dan Komosny',
       # maintainer_email='komosny@feec.vutbr.cz'
-      long_description=open("README.rst").read()
+      long_description=open("README.rst").read(),
+      scripts=['bin/plbmng']
       )

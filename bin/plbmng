@@ -1,5 +1,9 @@
 #!/usr/bin/python3
 import plbmng.plbmng
+import sys
 
-
+if len(sys.argv) > 1:
+    if(str(sys.argv[1]) == 'crontab'):
+        plbmng.plbmng.crontabScript()
+        exit(0)
 plbmng.plbmng.initInterface()
