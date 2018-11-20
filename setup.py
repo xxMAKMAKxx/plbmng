@@ -6,7 +6,7 @@ install_requires = ['vincent', 'folium', 'numpy', 'pandas', 'geocoder', 'paramik
 
 setup(name='plbmng',
       description='Tool for monitoring PlanetLab network',
-      version="0.1.10",
+      version="0.2",
       license='MIT',
       packages=find_packages(),
       package_data={},
