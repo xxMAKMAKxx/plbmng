@@ -2,7 +2,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-install_requires = ['vincent', 'folium', 'numpy', 'pandas', 'geocoder', 'paramiko']
+install_requires = ['vincent', 'folium', 'numpy', 'pandas', 'geocoder', 'paramiko', 'pythondialog']
 
 setup(name='plbmng',
       description='Tool for monitoring PlanetLab network',

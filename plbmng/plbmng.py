@@ -36,12 +36,7 @@ def signal_handler(sig, frame):
 def getPath():
     global path
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
-    pythonVersionCmd="ls ../lib | grep python3"
-    if(os.path.exists("../lib")):
-        pythonVersion = subprocess.check_output(pythonVersionCmd, shell=True)
-        path="../lib/"+pythonVersion+"/site-packages/plbmng"
-    else:
-        path=os.getcwd()
+    path=os.path.dirname(os.path.realpath(__file__))
 
 def clear():
     os.system("clear")
