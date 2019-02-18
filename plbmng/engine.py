@@ -9,9 +9,6 @@ from dialog import Dialog
 from platform   import system
 from paramiko.ssh_exception import BadHostKeyException, AuthenticationException, SSHException
 
-#local imports
-from lib import planetlab_list_creator
-
 #Constant definition
 OPTION_LOCATION=0
 OPTION_IP=1
