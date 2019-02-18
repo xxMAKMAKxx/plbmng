@@ -3,11 +3,14 @@
 #License: MIT
 #For my Diploma thesis at Faculty of Electrical Engineering -- Brno, University of Technology
 
-
+#system imports
 import locale,os,re,signal,sys,subprocess,paramiko,socket,folium,webbrowser
 from dialog import Dialog
 from platform   import system
 from paramiko.ssh_exception import BadHostKeyException, AuthenticationException, SSHException
+
+#local imports
+from lib import planetlab_list_creator
 
 #Constant definition
 OPTION_LOCATION=0
@@ -78,7 +81,7 @@ def testSsh(target):
 
 def getSshKey():
     sshPath=""
-    with open (path+"/bin/plbmng.conf",'r') as config:
+    with open (path+"/conf/plbmng.conf",'r') as config:
         for line in config:
             if(re.search('SSH_KEY',line)):
                 sshPath=(re.sub('SSH_KEY=','',line)).rstrip()
@@ -86,7 +89,7 @@ def getSshKey():
 
 def getSshUser():
     user=""
-    with open (path+"/bin/plbmng.conf",'r') as config:
+    with open (path+"/conf/plbmng.conf",'r') as config:
         for line in config:
             if(re.search('SLICE=',line)):
                 user=(re.sub('SLICE=','',line)).rstrip()
@@ -94,7 +97,7 @@ def getSshUser():
 
 def getUser():
     user=""
-    with open (path+"/bin/plbmng.conf",'r') as config:
+    with open (path+"/conf/plbmng.conf",'r') as config:
         for line in config:
             if(re.search('USERNAME=',line)):
                 user=(re.sub('USERNAME=','',line)).rstrip()
@@ -102,7 +105,7 @@ def getUser():
 
 def getPasswd():
     passwd=""
-    with open (path+"/bin/plbmng.conf",'r') as config:
+    with open (path+"/conf/plbmng.conf",'r') as config:
         for line in config:
             if(re.search('PASSWORD=',line)):
                 passwd=(re.sub('PASSWORD=','',line)).rstrip()
@@ -110,7 +113,7 @@ def getPasswd():
 
 def getNodes(nodeFile=None):
     if nodeFile == None:
-        nodeFile=path+'/default.node'
+        nodeFile=path+'/database/default.node'
     nodes=[]
     with open(nodeFile, 'r') as defaultNodeFile:
         lines=defaultNodeFile.readlines()[1:]
@@ -122,9 +125,24 @@ def getAllNodes():
     user=getUser()
     passwd=getPasswd()
     if(user != "") and (passwd != ""):
-        os.system("myPwd=$(pwd); cd "+path+"; python3 python_scripts/planetlab_list_creator.py -u \""+user+"\" -p \""+passwd+"\" -o ./; cd $(echo $myPwd)")
+        os.system("myPwd=$(pwd); cd "+path+"; python3 lib/planetlab_list_creator.py -u \""+user+"\" -p \""+passwd+"\" -o ./; cd $(echo $myPwd)")
     else:
         needToFillPasswdFirstInfo()
+
+def lastServerMenu():
+    printServerInfo(getLastServerAccess())
+
+def updateLastServerAccess(chosenOne):
+    lastServerFile=path+'/database/last_server.node'
+    with open(lastServerFile, 'w') as lastServerFile:
+        for element in chosenOne:
+            lastServerFile.write(element+' ')
+
+def getLastServerAccess():
+    lastServerFile=path+'/database/last_server.node'
+    with open(lastServerFile, 'r') as lastServerFile:
+        lastServer=lastServerFile.read().strip('\n').split()
+    return lastServer
 
 def searchNodes(option,regex=None):
     nodes = getNodes()
@@ -238,15 +256,15 @@ def plotServersOnMap(mode):
     fd = os.open(os.devnull, os.O_RDWR)
     os.dup2(fd, 2)
     os.dup2(fd, 1)
-    os.system("cat "+path+"/default.node | awk 'NR>1' |sort| uniq| cut -f10,11,3 | sort -k2 -u > "+path+"/python_scripts/base_data.txt")
+    os.system("cat "+path+"/database/default.node | awk 'NR>1' |sort| uniq| cut -f10,11,3 | sort -k2 -u > "+path+"/lib/base_data.txt")
     if(int(mode)==1):
-        os.system("myPwd=$(pwd); cd "+path+"; python3 python_scripts/icmp_map.py; cd $(echo $myPwd)")
+        os.system("myPwd=$(pwd); cd "+path+"; python3 lib/icmp_map.py; cd $(echo $myPwd)")
         mapFile="map_icmp.html"
     elif(int(mode)==2):
-        os.system("myPwd=$(pwd); cd "+path+"; python3 python_scripts/ssh_map.py; cd $(echo $myPwd)")
+        os.system("myPwd=$(pwd); cd "+path+"; python3 lib/ssh_map.py; cd $(echo $myPwd)")
         mapFile="map_ssh.html"
     else:
-        os.system("myPwd=$(pwd); cd "+path+"; python3 python_scripts/full_map.py; cd $(echo $myPwd)")
+        os.system("myPwd=$(pwd); cd "+path+"; python3 lib/full_map.py; cd $(echo $myPwd)")
         mapFile="map_full.html"
     try:
         webbrowser.get().open('file://' + os.path.realpath(path+"/"+mapFile))
@@ -266,6 +284,7 @@ def getServerInfo(serverId,option,nodes=None):
             if re.search(serverId,item[option]):
                 chosenOne=item
                 break
+        updateLastServerAccess(chosenOne)
         return printServerInfo(chosenOne),chosenOne
 
 
@@ -386,7 +405,7 @@ def initInterface():
         code, tag = d.menu("Choose one of the following options:",
                            choices=[("1", "Access servers"),
                                     ("2", "Monitor servers"),
-                                    ("3", "Plot servers on map"),
+                                    ("3", "Plot map"),
                                     ("4", "Set credentials"),
                                     ("5", "About")],
                            title="MAIN MENU")
@@ -411,9 +430,9 @@ def initInterface():
             exit(0)
 
 def setCredentialasGui():
-    code,text = d.editbox(path+'/bin/plbmng.conf',height=0, width=0)
+    code,text = d.editbox(path+'/conf/plbmng.conf',height=0, width=0)
     if(code == d.OK):
-        with open(path+'/bin/plbmng.conf', "w") as configFile:
+        with open(path+'/conf/plbmng.conf', "w") as configFile:
             configFile.write(text)
 
 
@@ -434,9 +453,9 @@ def aboutGui():
 def plotServersOnMapGui():
     while True:
         code, tag = d.menu("Choose one of the following options:",
-                           choices=[("1", "Generate ICMP map"),
-                                    ("2", "Generate SSH map"),
-                                    ("3", "Generate full map")],
+                           choices=[("1", "Plot servers reponding to ping"),
+                                    ("2", "Plot ssh available servers"),
+                                    ("3", "Plot all servers")],
                            title="Map menu")
         if code == d.OK:
             if(tag == "1"):
@@ -505,7 +524,8 @@ def accessServersGui():
         code, tag = d.menu("Choose one of the following options:",
                        choices=[("1", "Serach by DNS"),
                                 ("2", "Search by IP"),
-                                ("3", "Search by location")],
+                                ("3", "Search by location"),
+                                ("4", "Access last server")],
                        title="ACCESS SERVERS")
         if code == d.OK:
             #Search by DNS
@@ -529,6 +549,8 @@ def accessServersGui():
                 #TODO func for search by func
                 #Grepuje se default node
                 searchNodes(OPTION_LOCATION)
+            elif(tag == "4"):
+                lastServerMenu()
 
         else:
             return
