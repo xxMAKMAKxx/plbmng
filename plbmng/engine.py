@@ -68,11 +68,16 @@ def clear():
 
 
 def testPing(target, returnbool=False):
-    pingPacketWaitTime = 800
+    pingPacketWaitTime = None
     if system().lower() == 'windows':
         pingParam = '-n'
     else:
         pingParam = '-c'
+    #for Linux ping parameter takes seconds while MAC OS ping takes miliseconds
+    if system().lower() == 'linux':
+        pingPacketWaitTime = 1
+    else:
+        pingPacketWaitTime = 800
     command = ['ping', pingParam, '1', target, '-W', str(pingPacketWaitTime)]
     p = subprocess.Popen(command, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
