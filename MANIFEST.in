@@ -1,3 +1,2 @@
-global-include README.rst nor.txt plbmng.sh LICENSE planetlab_21-03-17_14-32.node default.node setup.py plbmng.py cron_script.sh
-recursive-include plbmng/bin *
-recursive-include plbmng/python_scripts * 
+global-include README.rst LICENSE README.md
+recursive-include plbmng *
