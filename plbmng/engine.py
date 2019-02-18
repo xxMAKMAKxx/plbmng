@@ -129,6 +129,18 @@ def getAllNodes():
     else:
         needToFillPasswdFirstInfo()
 
+def isFirstRun():
+    isFirst=path+'/database/first.boolean'
+    with open(isFirst, 'r') as isFirstFile:
+        bIsFirst=isFirstFile.read().strip('\n')
+        print(bIsFirst)
+    if(bIsFirst == "True"):
+        with open(isFirst, 'w') as isFirstFile:
+            isFirstFile.write("False")
+        return True
+    else:
+        return False
+
 def lastServerMenu():
     printServerInfo(getLastServerAccess())
 
@@ -393,6 +405,10 @@ def searchNodesGui(prepared_choices):
         else:
             return None
 
+def firstRunMessage():
+    d.msgbox("This is your first run of the application. Please go to 'Set Credentials' menu and set your credentials now.",height=0, width=0)
+    return
+
 def needToFillPasswdFirstInfo():
     d.msgbox("Credentials are not set. Please go to menu and set them now")
     return
@@ -400,6 +416,8 @@ def needToFillPasswdFirstInfo():
 def initInterface():
     getPath()
     signal.signal(signal.SIGINT, signal_handler)
+    if isFirstRun() == True:
+        firstRunMessage()
     while True:
         #Main menu
         code, tag = d.menu("Choose one of the following options:",
