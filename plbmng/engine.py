@@ -52,10 +52,12 @@ def testPing(target):
         pingParam='-c'
     command = ['ping', pingParam, '1', target]
     p = subprocess.Popen(command, stdout = subprocess.PIPE)
+    #prepare the regular expression to get time
     if system().lower()=='windows':
         avg=re.compile('Average = ([0-9]+)ms')
     else:
-        avg=re.compile('min/avg/max/mdev = [0-9.]+/([0-9.]+)/[0-9.]+/[0-9.]+')
+        avg=re.compile('min/avg/max/[a-z]+ = [0-9.]+/([0-9.]+)/[0-9.]+/[0-9.]+')
+    
     avgStr=avg.findall(str(p.communicate()[0]))
     if(p.returncode != 0):
         return "N/A"
