@@ -50,11 +50,12 @@ def crontabScript():
     exit(0)
 
 def testPing(target):
+    pingPacketWaitTime=300
     if system().lower()=='windows':
         pingParam='-n'
     else:
         pingParam='-c'
-    command = ['ping', pingParam, '1', target]
+    command = ['ping', pingParam, '1', target, '-W', str(pingPacketWaitTime)]
     p = subprocess.Popen(command, stdout = subprocess.PIPE)
     #prepare the regular expression to get time
     if system().lower()=='windows':
@@ -239,14 +240,13 @@ def showOnMap(node,nodeInfo=""):
     latitude = float(node[-2])
     longitude = float(node[-1])
     name = node[OPTION_DNS]
-
-    map = folium.Map(location=[latitude, longitude],
-                       zoom_start=2)
+    nodeMap = folium.Map(location=[latitude, longitude],
+                       zoom_start=2,min_zoom=2)
     if (nodeInfo == ""):
-        folium.Market([latitude,longitude],popup=name).add_to(map)
+        folium.Market([latitude,longitude],popup=name).add_to(nodeMap)
     else:
-        folium.Marker([latitude, longitude],popup=(nodeInfo["text"].replace('\n','<br>'))).add_to(map)
-    map.save('/tmp/map_plbmng.html')
+        folium.Marker([latitude, longitude],popup=(nodeInfo["text"].replace('\n','<br>'))).add_to(nodeMap)
+    nodeMap.save('/tmp/map_plbmng.html')
     try:
         webbrowser.get().open('file://' + os.path.realpath('/tmp/map_plbmng.html'))
     finally:
