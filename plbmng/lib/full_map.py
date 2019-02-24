@@ -6,7 +6,7 @@ import folium
 import csv
 
 
-def main():
+def plot_server_on_map(text=""):
     """
     Creates a map of every known node and generates chart with information about their's latency.\n
     :return: map_full.html file
@@ -53,7 +53,10 @@ def main():
                 x = float(row[1])
                 y = float(row[2])
                 print(" %s " % name)
-                folium.Marker([x, y],popup=name).add_to(map_full)
+                if(text == ""):
+                    folium.Marker([x, y],popup=name).add_to(map_full)
+                else:
+                    folium.Marker([x, y],popup=text).add_to(map_full)
             except ValueError:
                 pass
 
@@ -61,4 +64,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    plot_server_on_map()

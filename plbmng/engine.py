@@ -11,6 +11,7 @@ from paramiko.ssh_exception import BadHostKeyException, AuthenticationException,
 
 #local imports
 from lib import port_scanner
+from lib import full_map
 
 #Constant definition
 OPTION_LOCATION=0
@@ -261,16 +262,10 @@ def plotServersOnMap(mode):
     fd = os.open(os.devnull, os.O_RDWR)
     os.dup2(fd, 2)
     os.dup2(fd, 1)
+    #update base_data.txt file based on latest database with nodes
     os.system("cat "+path+"/database/default.node | awk 'NR>1' |sort| uniq| cut -f10,11,3 | sort -k2 -u > "+path+"/lib/base_data.txt")
-    if(int(mode)==1):
-        os.system("myPwd=$(pwd); cd "+path+"; python3 lib/icmp_map.py; cd $(echo $myPwd)")
-        mapFile="map_icmp.html"
-    elif(int(mode)==2):
-        os.system("myPwd=$(pwd); cd "+path+"; python3 lib/ssh_map.py; cd $(echo $myPwd)")
-        mapFile="map_ssh.html"
-    else:
-        os.system("myPwd=$(pwd); cd "+path+"; python3 lib/full_map.py; cd $(echo $myPwd)")
-        mapFile="map_full.html"
+    full_map.plot_server_on_map()
+    mapFile="map_full.html"
     try:
         webbrowser.get().open('file://' + os.path.realpath(path+"/"+mapFile))
     finally:
@@ -483,15 +478,8 @@ def plotServersOnMapGui():
                                     ("3", "Plot all servers")],
                            title="Map menu")
         if code == d.OK:
-            if(tag == "1"):
-                plotServersOnMap(tag)
-                return
-            if(tag == "2"):
-                plotServersOnMap(tag)
-                return
-            if(tag == "3"):
-                plotServersOnMap(tag)
-                return
+            plotServersOnMap(tag)
+            return
         else:
             return
 
