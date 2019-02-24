@@ -60,9 +60,10 @@ def testPing(target):
     
     avgStr=avg.findall(str(p.communicate()[0]))
     if(p.returncode != 0):
-        return "N/A"
-    p.kill()
-    return avgStr[0]
+        return "Not reachable via ICMP"
+    else:
+        p.kill()
+        return avgStr[0]+" ms"
 
 def testSsh(target):
     ssh = paramiko.SSHClient()
@@ -213,7 +214,7 @@ def searchNodes(option,regex=None):
     if(returnedChoice == None):
         return
     else:
-        returnedChoice,chosenNode = getServerInfo(choices[int(returnedChoice)-1][1], option, nodes)
+        returnedChoice,infoAboutNodeDic,chosenNode = getServerInfo(choices[int(returnedChoice)-1][1], option, nodes)
     if(returnedChoice == None):
         return
     elif(int(returnedChoice) == 1):
@@ -221,7 +222,7 @@ def searchNodes(option,regex=None):
     elif(int(returnedChoice) == 2):
         connect(int(returnedChoice),chosenNode)
     elif(int(returnedChoice) == 3):
-        showOnMap(chosenNode)
+        showOnMap(chosenNode,infoAboutNodeDic)
 
 def connect(mode,node):
     clear()
@@ -234,9 +235,7 @@ def connect(mode,node):
     else:
         return
 
-
-
-def showOnMap(node):
+def showOnMap(node,nodeInfo=""):
     _stderr = os.dup(2)
     os.close(2)
     _stdout = os.dup(1)
@@ -250,7 +249,10 @@ def showOnMap(node):
 
     map = folium.Map(location=[latitude, longitude],
                        zoom_start=2)
-    folium.Marker([latitude, longitude], popup=name).add_to(map)
+    if (nodeInfo == ""):
+        folium.Market([latitude,longitude],popup=name).add_to(map)
+    else:
+        folium.Marker([latitude, longitude],popup=(nodeInfo["text"].replace('\n','<br>'))).add_to(map)
     map.save('/tmp/map_plbmng.html')
     try:
         webbrowser.get().open('file://' + os.path.realpath('/tmp/map_plbmng.html'))
@@ -291,12 +293,54 @@ def getServerInfo(serverId,option,nodes=None):
     if option == 0:
         option=OPTION_DNS
     if isinstance(serverId,str):
-        for item in nodes:
-            if re.search(serverId,item[option]):
-                chosenOne=item
-                break
-        updateLastServerAccess(chosenOne)
-        return printServerInfo(chosenOne),chosenOne
+            #in nodes find the chosenONe node
+            chosenOne=""
+            for item in nodes:
+                if re.search(serverId,item[option]):
+                    chosenOne=item
+                    break
+            if(chosenOne == ""):
+                print("Internal error, please file a bug report via PyPi")
+                exit(99)
+            #update last server access database
+            updateLastServerAccess(chosenOne)
+            #get information about servers
+            infoAboutNodeDic = dict()
+            region,city,url,fullname,lat,lon = getInfoFromNode(chosenOne)
+            infoAboutNodeDic["region"] = region
+            infoAboutNodeDic["city"] = city
+            infoAboutNodeDic["url"] = url
+            infoAboutNodeDic["fullname"] = fullname
+            infoAboutNodeDic["lat"] = lat
+            infoAboutNodeDic["lon"] = lon
+            infoAboutNodeDic["icmp"]=testPing(chosenOne[OPTION_IP])
+            infoAboutNodeDic["sshAvailable"]=testSsh(chosenOne[OPTION_IP])
+            infoAboutNodeDic["text"]="""
+            NODE: %s
+            IP: %s
+            CONTINENT: %s
+            COUNTRY: %s
+            REGION: %s
+            CITY: %s
+            URL: %s
+            FULL NAME: %s
+            LATITUDE: %s
+            LONGITUDE: %s
+            ICMP RESPOND: %s
+            SSH AVAILABLE: %r
+            """ %  (chosenOne[OPTION_DNS],
+                chosenOne[OPTION_IP],
+                chosenOne[OPTION_CONTINENT],
+                chosenOne[OPTION_COUNTRY],
+                infoAboutNodeDic["region"],
+                infoAboutNodeDic["city"],
+                infoAboutNodeDic["url"],
+                infoAboutNodeDic["fullname"],
+                infoAboutNodeDic["lat"],
+                infoAboutNodeDic["lon"],
+                infoAboutNodeDic["icmp"],
+                infoAboutNodeDic["sshAvailable"])   
+            return printServerInfo(infoAboutNodeDic),infoAboutNodeDic,chosenOne
 
 
 def getInfoFromNode(node):
@@ -352,40 +396,12 @@ def addToCron(mode):
 #  GUI functions  #
 ###################
 
-def printServerInfo(chosenOne):
-    region,city,url,fullname,lat,lon = getInfoFromNode(chosenOne)
-    icmp=testPing(chosenOne[OPTION_IP])
-    sshAvailable=testSsh(chosenOne[OPTION_IP])
-    text="""
-        NODE: %s
-        IP: %s
-        CONTINENT: %s
-        COUNTRY: %s
-        REGION: %s
-        CITY: %s
-        URL: %s
-        FULL NAME: %s
-        LATITUDE: %s
-        LONGITUDE: %s
-        ICMP RESPOND: %s ms
-        SSH AVAILABLE: %r
-        """ %  (chosenOne[OPTION_DNS], 
-                chosenOne[OPTION_IP], 
-                chosenOne[OPTION_CONTINENT],
-                chosenOne[OPTION_COUNTRY],
-                region,
-                city,
-                url,
-                fullname,
-                lat,
-                lon,
-                icmp,
-                sshAvailable)
+def printServerInfo(infoAboutNodeDic):
 
     preparedChoices=[("1","Connect via SSH"),
                      ("2", "Connect via MC"),
                      ("3", "Show on map")]
-    code, tag = d.menu(text, height=0, width=0, menu_height=0, choices=preparedChoices)
+    code, tag = d.menu(infoAboutNodeDic["text"], height=0, width=0, menu_height=0, choices=preparedChoices)
     if code == d.OK:
         return tag
     else:
