@@ -9,6 +9,9 @@ from dialog import Dialog
 from platform   import system
 from paramiko.ssh_exception import BadHostKeyException, AuthenticationException, SSHException
 
+#local imports
+from lib import port_scanner
+
 #Constant definition
 OPTION_LOCATION=0
 OPTION_IP=1
@@ -66,18 +69,7 @@ def testPing(target):
         return avgStr[0]+" ms"
 
 def testSsh(target):
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    user=getSshUser()
-    key=getSshKey()
-    try:
-        ssh.connect(target, username=user, key_filename=key,timeout=2)
-        return True
-    except (BadHostKeyException, AuthenticationException, 
-        SSHException, socket.error) as e:
-        print(e)
-        return False
-    exit(0)
+    return port_scanner.testPortAvailability(target,22)
 
 def getSshKey():
     sshPath=""
@@ -285,7 +277,6 @@ def plotServersOnMap(mode):
         os.close(fd)
         os.dup2(_stderr, 2)
         os.dup2(_stdout, 1)
-    exit(0)
 
 
 def getServerInfo(serverId,option,nodes=None):
@@ -566,7 +557,6 @@ def accessServersGui():
             if(tag == "1"):
                 code, answer = d.inputbox("Search for:",title="Search")
                 if code == d.OK:
-                    #TODO func
                     searchNodes(OPTION_DNS,answer)
                 else:
                     continue
@@ -574,13 +564,11 @@ def accessServersGui():
             elif(tag == "2"):
                 code, answer = d.inputbox("Search for:",title="Search")
                 if code == d.OK:
-                    #TODO func
                     searchNodes(OPTION_IP,answer)
                 else:
                     continue
             #Search by location
             elif(tag == "3"):
-                #TODO func for search by func
                 #Grepuje se default node
                 searchNodes(OPTION_LOCATION)
             elif(tag == "4"):
