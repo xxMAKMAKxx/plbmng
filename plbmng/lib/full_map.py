@@ -53,9 +53,7 @@ def main():
                 x = float(row[1])
                 y = float(row[2])
                 print(" %s " % name)
-                folium.Marker([x, y],
-                              popup=folium.Popup(max_width=600).add_child(
-                                  folium.Vega(json.load(open('vega.json')), width=700, height=400))).add_to(map_full)
+                folium.Marker([x, y],popup=name).add_to(map_full)
             except ValueError:
                 pass
 
