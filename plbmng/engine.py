@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-#Authors: Martin Kacmarcik, Filip Suba, Tomas Andrasov
+#Author: Martin Kacmarcik
 #License: MIT
 #For my Diploma thesis at Faculty of Electrical Engineering -- Brno, University of Technology
 
@@ -285,6 +285,7 @@ def plotServersOnMap(mode):
         os.close(fd)
         os.dup2(_stderr, 2)
         os.dup2(_stdout, 1)
+    exit(0)
 
 
 def getServerInfo(serverId,option,nodes=None):

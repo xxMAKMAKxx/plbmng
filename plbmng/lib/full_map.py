@@ -46,7 +46,7 @@ def main():
     map_full = folium.Map(location=[45.372, -121.6972],
                           zoom_start=2)
 
-    with open('python_scripts/base_data.txt') as tsv:
+    with open('lib/base_data.txt') as tsv:
         for row in csv.reader(tsv, delimiter='\t'):
             try:
                 name = row[0]

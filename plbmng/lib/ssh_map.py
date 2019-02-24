@@ -11,7 +11,7 @@ def main():
     map_ssh = folium.Map(location=[45.523, -122.675],
                          zoom_start=2)
 
-    with open('python_scripts/base_data.txt') as tsv:
+    with open('lib/base_data.txt') as tsv:
         for row in csv.reader(tsv, delimiter='\t'):
             name = row[0]
             try:
