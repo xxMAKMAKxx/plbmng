@@ -33,7 +33,7 @@ OPTION_LON=10
 #Initial settings
 locale.setlocale(locale.LC_ALL, '')
 d = Dialog(dialog="dialog")
-d.set_background_title("Planetlab Server Manager (v. 0.2)")
+d.set_background_title("Planetlab Server Manager (v. 0.2.1)")
 path=""
 
 def signal_handler(sig, frame):
@@ -513,7 +513,7 @@ def aboutGui():
                 Filip Suba
                 Martin Kacmarcik
 
-            Version 0.2
+            Version 0.2.1
             This application is under MIT license.
             """, width=0, height=0, title="About")
 
