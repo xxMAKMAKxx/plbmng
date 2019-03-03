@@ -178,16 +178,15 @@ def isFirstRun():
 def lastServerMenu():
     printServerInfo(getLastServerAccess())
 
-def updateLastServerAccess(chosenOne):
+def updateLastServerAccess(infoAboutNodeDic):
     lastServerFile=path+'/database/last_server.node'
     with open(lastServerFile, 'w') as lastServerFile:
-        for element in chosenOne:
-            lastServerFile.write(element+' ')
+        lastServerFile.write(repr(infoAboutNodeDic))
 
 def getLastServerAccess():
     lastServerFile=path+'/database/last_server.node'
     with open(lastServerFile, 'r') as lastServerFile:
-        lastServer=lastServerFile.read().strip('\n').split()
+        lastServer=eval(lastServerFile.read().strip('\n'))
     return lastServer
 
 def searchNodes(option,regex=None):
@@ -331,8 +330,6 @@ def getServerInfo(serverId,option,nodes=None):
             if(chosenOne == ""):
                 print("Internal error, please file a bug report via PyPi")
                 exit(99)
-            #update last server access database
-            updateLastServerAccess(chosenOne)
             #get information about servers
             infoAboutNodeDic = dict()
             region,city,url,fullname,lat,lon = getInfoFromNode(chosenOne)
@@ -370,6 +367,8 @@ def getServerInfo(serverId,option,nodes=None):
                 infoAboutNodeDic["icmp"],
                 infoAboutNodeDic["sshAvailable"])   
             if(infoAboutNodeDic["sshAvailable"] is True or infoAboutNodeDic["sshAvailable"] is False):
+                #update last server access database
+                updateLastServerAccess(infoAboutNodeDic)
                 return printServerInfo(infoAboutNodeDic),infoAboutNodeDic,chosenOne
             else:
                 return False,False,False
