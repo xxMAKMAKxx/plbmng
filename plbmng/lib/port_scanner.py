@@ -21,8 +21,6 @@ def testPortAvailability(hostname,port):
         print("You pressed Ctrl+C")
         sys.exit(96)
     except socket.gaierror:
-        print("Hostname could not be resolved. Please check your DNS provider.")
-        sys.exit(98)
+        return 98
     except socket.error:
-        print("Error while connecting to server")
-        sys.exit(97)
+        return 97

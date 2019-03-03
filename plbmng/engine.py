@@ -75,7 +75,16 @@ def testPing(target):
         return avgStr[0]+" ms"
 
 def testSsh(target):
-    return port_scanner.testPortAvailability(target,22)
+    result = port_scanner.testPortAvailability(target,22)
+    if (result is True or result is False):
+        return result
+    elif result is 98:
+        d.msgbox("Hostname could not be resolved. Either the server has been removed or you have wrongly set DNS.")
+        return result
+    elif result is 97:
+        d.msgbox("Error while connecting to server. Please check your network settings.")
+        return result
+        
 
 def verifyApiCredentialsExist():
     with open (path+"/conf/plbmng.conf",'r') as config:
@@ -242,6 +251,8 @@ def searchNodes(option,regex=None):
         returnedChoice,infoAboutNodeDic,chosenNode = getServerInfo(choices[int(returnedChoice)-1][1], option, nodes)
     if(returnedChoice == None):
         return
+    elif(returnedChoice == False):
+        return
     elif(int(returnedChoice) == 1):
         connect(int(returnedChoice),chosenNode)
     elif(int(returnedChoice) == 2):
@@ -358,7 +369,10 @@ def getServerInfo(serverId,option,nodes=None):
                 infoAboutNodeDic["lon"],
                 infoAboutNodeDic["icmp"],
                 infoAboutNodeDic["sshAvailable"])   
-            return printServerInfo(infoAboutNodeDic),infoAboutNodeDic,chosenOne
+            if(infoAboutNodeDic["sshAvailable"] is True or infoAboutNodeDic["sshAvailable"] is False):
+                return printServerInfo(infoAboutNodeDic),infoAboutNodeDic,chosenOne
+            else:
+                return False,False,False
 
 
 def getInfoFromNode(node):
