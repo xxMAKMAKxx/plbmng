@@ -73,6 +73,33 @@ def testPing(target):
 def testSsh(target):
     return port_scanner.testPortAvailability(target,22)
 
+def verifyApiCredentialsExist():
+    with open (path+"/conf/plbmng.conf",'r') as config:
+        for line in config:
+            if(re.search('USERNAME',line)):
+                username=(re.sub('USERNAME="(.*)"',r'\1',line)).rstrip()
+                if not username:
+                    return False
+            elif(re.search('PASSWORD',line)):
+                password=(re.sub('PASSWORD="(.*)"',r'\1',line)).rstrip()
+                if not password:
+                    return False
+    return True
+
+def verifySshCredentialsExist():
+    with open (path+"/conf/plbmng.conf",'r') as config:
+        for line in config:
+            if(re.search('SLICE',line)):
+                slice=(re.sub('SLICE="(.*)"',r'\1',line)).rstrip()
+                if not slice:
+                    return False
+            elif(re.search('SSH_KEY',line)):
+                key=(re.sub('SSH_KEY="(.*)"',r'\1',line)).rstrip()
+                if not key:
+                    return False
+    return True
+
+
 def getSshKey():
     sshPath=""
     with open (path+"/conf/plbmng.conf",'r') as config:
@@ -384,10 +411,14 @@ def addToCron(mode):
 ###################
 
 def printServerInfo(infoAboutNodeDic):
-
-    preparedChoices=[("1","Connect via SSH"),
-                     ("2", "Connect via MC"),
-                     ("3", "Show on map")]
+    if not verifySshCredentialsExist():
+        preparedChoices=[("1","Connect via SSH (Credentials not set!)"),
+                         ("2", "Connect via MC (Credentials not set!)"),
+                         ("3", "Show on map")]
+    else:
+        preparedChoices=[("1","Connect via SSH"),
+                         ("2", "Connect via MC"),
+                         ("3", "Show on map")]
     code, tag = d.menu(infoAboutNodeDic["text"], height=0, width=0, menu_height=0, choices=preparedChoices)
     if code == d.OK:
         return tag
@@ -485,6 +516,8 @@ def plotServersOnMapGui():
 
 #Monitor servers part of GUI
 def monitorServersGui():
+    if not verifyApiCredentialsExist():
+        d.msgbox("Warning! Your credentials for PlanetLab API are not set. Please use 'Set credentials' option in main menu to set them.")
     while True:
         code, tag = d.menu("Choose one of the following options:",
                            choices=[("1", "Set cron for monitoring"),
