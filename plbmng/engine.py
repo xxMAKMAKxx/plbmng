@@ -3,8 +3,12 @@
 #License: MIT
 #For my Diploma thesis at Faculty of Electrical Engineering -- Brno, University of Technology
 
+#Set PATH for local libraries
+import sys,os
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+
 #system imports
-import locale,os,re,signal,sys,subprocess,paramiko,socket,folium,webbrowser
+import locale,re,signal,subprocess,paramiko,socket,folium,webbrowser
 from dialog import Dialog
 from platform   import system
 from paramiko.ssh_exception import BadHostKeyException, AuthenticationException, SSHException
