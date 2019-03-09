@@ -12,6 +12,9 @@ import locale,re,signal,subprocess,paramiko,socket,folium,webbrowser
 from dialog import Dialog
 from platform   import system
 from paramiko.ssh_exception import BadHostKeyException, AuthenticationException, SSHException
+import sqlite3
+import hashlib
+from multiprocessing import Pool, Lock, Value
 
 #local imports
 from lib import port_scanner
@@ -29,6 +32,10 @@ OPTION_URL=7
 OPTION_NAME=8
 OPTION_LAT=9
 OPTION_LON=10
+
+#global variables
+base = 0
+increment = 0
 
 #Initial settings
 locale.setlocale(locale.LC_ALL, '')
@@ -53,14 +60,14 @@ def crontabScript():
     os.system(path+'/cron_script.sh')
     exit(0)
 
-def testPing(target):
+def testPing(target, returnbool=False):
     pingPacketWaitTime=300
     if system().lower()=='windows':
         pingParam='-n'
     else:
         pingParam='-c'
     command = ['ping', pingParam, '1', target, '-W', str(pingPacketWaitTime)]
-    p = subprocess.Popen(command, stdout = subprocess.PIPE)
+    p = subprocess.Popen(command, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
     #prepare the regular expression to get time
     if system().lower()=='windows':
         avg=re.compile('Average = ([0-9]+)ms')
@@ -69,20 +76,28 @@ def testPing(target):
     
     avgStr=avg.findall(str(p.communicate()[0]))
     if(p.returncode != 0):
-        return "Not reachable via ICMP"
+        if returnbool == False:
+            return "Not reachable via ICMP"
+        else:
+            return False
     else:
         p.kill()
-        return avgStr[0]+" ms"
+        if returnbool == False:
+            return avgStr[0]+" ms"
+        else:
+            return True
 
-def testSsh(target):
+def testSsh(target,printwarn=True):
     result = port_scanner.testPortAvailability(target,22)
     if (result is True or result is False):
         return result
     elif result is 98:
-        d.msgbox("Hostname could not be resolved. Either the server has been removed or you have wrongly set DNS.")
+        if printwarn is True:
+            d.msgbox("Hostname could not be resolved. Either the server has been removed or you have wrongly set DNS.")
         return result
     elif result is 97:
-        d.msgbox("Error while connecting to server. Please check your network settings.")
+        if printwarn is True:
+            d.msgbox("Error while connecting to server. Please check your network settings.")
         return result
         
 
@@ -112,9 +127,60 @@ def verifySshCredentialsExist():
                     return False
     return True
 
-def updateAvailabilityDatabase():
-    print('todo feature')
-    exit(0)
+#parent function to update availability DB that controls multiple processes
+def updateAvailabilityDatabaseParent():
+    nodes = getNodes()
+    increment = Value('f',0)
+    increment.value = float(100/len(nodes))
+    base = Value('f',0)
+    lock = Lock()
+    d.gauge_start()
+    pool = Pool(50, initializer=multiProcessingInit, initargs=(lock,base,increment,))
+    pool.map(updateAvailabilityDatabase, nodes)
+    pool.close()
+    pool.join()
+    d.gauge_update(100, "Completed")
+    exit_code = d.gauge_stop()
+    d.msgbox("Availability database has been successfully updated")
+
+
+def multiProcessingInit(l, b, i):
+    global lock
+    lock = l
+    global base
+    base = b
+    global increment
+    increment = i
+
+
+def updateProgressBarMultiProcessing(increment_number):
+    global d
+    d.gauge_update(int(increment_number))
+
+def updateAvailabilityDatabase(node):
+    #inint block
+    db = sqlite3.connect('database/internal.db')
+    cursor = db.cursor()
+    #action block
+    hash_object = hashlib.md5(node[2].encode())
+    ssh_result='T' if testSsh(node[2], False) == True else 'F'
+    ping_result='T' if testPing(node[1], True) == True else 'F'
+    #find if object exists in the database
+    cursor.execute('SELECT nkey from AVAILABILITY where shash = \"'+str(hash_object.hexdigest())+'\";')
+    if(cursor.fetchone() is None):
+        #the object yet doesn't exist
+        cursor.execute("INSERT into AVAILABILITY(shash,shostname,bssh,bping) VALUES (\""+hash_object.hexdigest()+"\", \""+node[2]+"\", \""+ssh_result+"\", \""+ping_result+"\")")
+    else:
+        #object exists, just update results
+        cursor.execute("UPDATE availability SET bssh=\""+ssh_result+"\", bping=\""+ping_result+"\" WHERE shash=\""+hash_object.hexdigest()+"\"")
+    lock.acquire()
+    base.value = base.value + increment.value
+    updateProgressBarMultiProcessing(base.value)
+    lock.release()
+    #clean up
+    db.commit()
+    db.close()
+    
 
 def getSshKey():
     sshPath=""
@@ -347,7 +413,7 @@ def getServerInfo(serverId,option,nodes=None):
             infoAboutNodeDic["lat"] = lat
             infoAboutNodeDic["lon"] = lon
             infoAboutNodeDic["icmp"]=testPing(chosenOne[OPTION_IP])
-            infoAboutNodeDic["sshAvailable"]=testSsh(chosenOne[OPTION_IP])
+            infoAboutNodeDic["sshAvailable"]=testSsh(chosenOne[OPTION_DNS])
             infoAboutNodeDic["text"]="""
             NODE: %s
             IP: %s
@@ -586,12 +652,12 @@ def monitorServersGui():
                 else:
                     continue
             elif(tag == "4"):
-                if d.yesno("This is going to take around 10 minutes") == d.OK:
+                if d.yesno("This can take few minutes. Do you want to continue?") == d.OK:
                     if not verifySshCredentialsExist():
                         d.msgbox("Error! Your ssh credentials are not set. Please use 'Set credentials' option in main menu to set them.")
                         continue
                     else:
-                        updateAvailabilityDatabase()
+                        updateAvailabilityDatabaseParent()
                 else:
                     continue
         else:
