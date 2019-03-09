@@ -33,7 +33,7 @@ OPTION_LON=10
 #Initial settings
 locale.setlocale(locale.LC_ALL, '')
 d = Dialog(dialog="dialog")
-d.set_background_title("Planetlab Server Manager (v. 0.2.1)")
+d.set_background_title("Planetlab Server Manager (v. 0.2.2)")
 path=""
 
 def signal_handler(sig, frame):
@@ -112,6 +112,9 @@ def verifySshCredentialsExist():
                     return False
     return True
 
+def updateAvailabilityDatabase():
+    print('todo feature')
+    exit(0)
 
 def getSshKey():
     sshPath=""
@@ -264,9 +267,13 @@ def connect(mode,node):
     key = getSshKey()
     user = getSshUser()
     if(mode == 1):
-        os.system("ssh -o \"StrictHostKeyChecking=no\" -o \"UserKnownHostsFile=/dev/null\" -i "+key+" "+user+"@"+node[OPTION_IP])
+        return_value = os.system("ssh -o \"StrictHostKeyChecking=no\" -o \"UserKnownHostsFile=/dev/null\" -i "+key+" "+user+"@"+node[OPTION_IP])
+        if return_value is not 0:
+            d.msgbox("Error while connecting. Please verify your credentials.")
     elif(mode ==2 ):
-        os.system("mc sh://"+user+"@"+node[OPTION_IP]+":/home")
+        return_value = os.system("mc sh://"+user+"@"+node[OPTION_IP]+":/home")
+        if return_value is not 0:
+            d.msgbox("Error while connecting. Please verify your credentials.")
     else:
         return
 
@@ -513,7 +520,7 @@ def aboutGui():
                 Filip Suba
                 Martin Kacmarcik
 
-            Version 0.2.1
+            Version 0.2.2
             This application is under MIT license.
             """, width=0, height=0, title="About")
 
@@ -539,7 +546,8 @@ def monitorServersGui():
         code, tag = d.menu("Choose one of the following options:",
                            choices=[("1", "Set cron for monitoring"),
                                     ("2", "Set monitoring elements"),
-                                    ("3", "Get nodes")],
+                                    ("3", "Get nodes"),
+                                    ("4", "Update availability database")],
                            title="Monitoring menu")
         if code == d.OK:
             if(tag == "1"):
@@ -575,6 +583,15 @@ def monitorServersGui():
             elif(tag == "3"):
                 if d.yesno("This is going to take around 20 minutes") == d.OK:
                     getAllNodes()
+                else:
+                    continue
+            elif(tag == "4"):
+                if d.yesno("This is going to take around 10 minutes") == d.OK:
+                    if not verifySshCredentialsExist():
+                        d.msgbox("Error! Your ssh credentials are not set. Please use 'Set credentials' option in main menu to set them.")
+                        continue
+                    else:
+                        updateAvailabilityDatabase()
                 else:
                     continue
         else:
