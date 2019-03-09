@@ -245,12 +245,23 @@ def isFirstRun():
         return False
 
 def lastServerMenu():
-    printServerInfo(getLastServerAccess())
+    infoAboutNodeDic,chosenNode = getLastServerAccess()
+    returnedChoice = printServerInfo(infoAboutNodeDic)
+    if(returnedChoice == None):
+        return
+    elif(returnedChoice == False):
+        return
+    elif(int(returnedChoice) == 1):
+        connect(int(returnedChoice),chosenNode)
+    elif(int(returnedChoice) == 2):
+        connect(int(returnedChoice),chosenNode)
+    elif(int(returnedChoice) == 3):
+        showOnMap(chosenNode,infoAboutNodeDic)
 
-def updateLastServerAccess(infoAboutNodeDic):
+def updateLastServerAccess(infoAboutNodeDic, chosenNode):
     lastServerFile=path+'/database/last_server.node'
     with open(lastServerFile, 'w') as lastServerFile:
-        lastServerFile.write(repr(infoAboutNodeDic))
+        lastServerFile.write(repr((infoAboutNodeDic, chosenNode)))
 
 def getLastServerAccess():
     lastServerFile=path+'/database/last_server.node'
@@ -394,7 +405,7 @@ def getServerInfo(serverId,option,nodes=None):
     if option == 0:
         option=OPTION_DNS
     if isinstance(serverId,str):
-            #in nodes find the chosenONe node
+            #in nodes find the chosenOne node
             chosenOne=""
             for item in nodes:
                 if re.search(serverId,item[option]):
@@ -441,7 +452,7 @@ def getServerInfo(serverId,option,nodes=None):
                 infoAboutNodeDic["sshAvailable"])   
             if(infoAboutNodeDic["sshAvailable"] is True or infoAboutNodeDic["sshAvailable"] is False):
                 #update last server access database
-                updateLastServerAccess(infoAboutNodeDic)
+                updateLastServerAccess(infoAboutNodeDic,chosenOne)
                 return printServerInfo(infoAboutNodeDic),infoAboutNodeDic,chosenOne
             else:
                 return False,False,False
@@ -607,6 +618,7 @@ def filteringOptionsGui():
 
 def aboutGui():
     d.msgbox("""
+            PlanetLab Server Manager is an interactive graphical enabled server inventory tool.
             Project supervisor:
                 Dan Komosny
             Authors:
