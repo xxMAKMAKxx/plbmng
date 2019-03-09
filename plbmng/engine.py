@@ -40,13 +40,13 @@ increment = 0
 #Initial settings
 locale.setlocale(locale.LC_ALL, '')
 d = Dialog(dialog="dialog")
-d.set_background_title("Planetlab Server Manager (v. 0.2.2)")
+d.set_background_title("Planetlab Server Manager (v. 0.2.3)")
 path=""
 
 def signal_handler(sig, frame):
     clear()
-    print('You pressed Ctrl+C!')
-    exit(0)
+    print('Terminating program. You have pressed Ctrl+C')
+    exit(1)
 
 def getPath():
     global path
@@ -576,6 +576,34 @@ def setCredentialasGui():
         with open(path+'/conf/plbmng.conf', "w") as configFile:
             configFile.write(text)
 
+def filteringOptionsGui():
+    #inint the database to pull configuration data
+    db = sqlite3.connect('database/internal.db')
+    cursor = db.cursor()
+    cursor.execute("select senabled from configuration where sname='ssh'")
+    ssh_enabled = True if cursor.fetchone()[0] == 'T' else False
+    cursor.execute("select senabled from configuration where sname='ping'")
+    ping_enabled = True if cursor.fetchone()[0] == 'T' else False
+    #Render the GUI
+    code, t = d.checklist(
+             "Press SPACE key to choose filtering options", height=0, width=0, list_height=0,
+    choices=[ ("1", "Enable SSH accessible machines", ssh_enabled),
+            ("2", "Enable PING accessible machines", ping_enabled)],)
+    #Detect changes using simple combination and update the database based on result
+    if '1' in t and ssh_enabled == False:
+        cursor.execute('UPDATE configuration SET senabled="T" where sname="ssh"')
+        db.commit()
+    elif '1' not in t and ssh_enabled == True:
+        cursor.execute('UPDATE configuration SET senabled="F" where sname="ssh"')
+        db.commit()
+    if '2' in t and ping_enabled == False:
+        cursor.execute('UPDATE configuration SET senabled="T" where sname="ping"')
+        db.commit()
+    elif '2' not in t and ping_enabled == True:
+        cursor.execute('UPDATE configuration SET senabled="F" where sname="ping"')
+        db.commit()
+    #Clean up database
+    db.close()
 
 def aboutGui():
     d.msgbox("""
@@ -586,7 +614,7 @@ def aboutGui():
                 Filip Suba
                 Martin Kacmarcik
 
-            Version 0.2.2
+            Version 0.2.3
             This application is under MIT license.
             """, width=0, height=0, title="About")
 
@@ -671,7 +699,8 @@ def accessServersGui():
                        choices=[("1", "Serach by DNS"),
                                 ("2", "Search by IP"),
                                 ("3", "Search by location"),
-                                ("4", "Access last server")],
+                                ("4", "Access last server"),
+                                ("5", "Filtering options")],
                        title="ACCESS SERVERS")
         if code == d.OK:
             #Search by DNS
@@ -692,8 +721,12 @@ def accessServersGui():
             elif(tag == "3"):
                 #Grepuje se default node
                 searchNodes(OPTION_LOCATION)
+            #Access last server
             elif(tag == "4"):
                 lastServerMenu()
+            #Filtering options
+            elif(tag == "5"):
+                filteringOptionsGui()
 
         else:
             return
