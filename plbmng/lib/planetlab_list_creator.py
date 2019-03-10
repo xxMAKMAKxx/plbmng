@@ -131,7 +131,7 @@ def append_to_file(node):
     """
     if arg["id"] == arg["start_id"]:
         try:
-            f = open(os.path.join(arg["path"] + '/default.node'), "w")
+            f = open(os.path.join(arg["path"] + '/database/default2.node'), "w")
             f.write("# ID\tIP\tDNS\tCONTINENT\tCOUNTRY\tREGION\tCITY\tURL\tFULL NAME\tLATITUDE\tLONGITUDE\n")
             f.close()
         except Exception as err:
@@ -140,7 +140,7 @@ def append_to_file(node):
             sys.exit(1)
 
     try:
-        with codecs.open(os.path.join(arg["path"] + '/default.node'),
+        with codecs.open(os.path.join(arg["path"] + '/database/default2.node'),
                          mode="a", encoding="utf-8") as f:
             f.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(str(arg["id"]), node["ip"],
                                                                           node["hostname"],
@@ -188,7 +188,7 @@ def run(path=None, username=None, password=None, start_id=None, quiet=False, ret
     :param start_id: integer value for numbering. Optional: default=1\n
     :param quiet:  boolean value deciding whether to print information as standard output. Optional: default=False\n
     :param return_output: boolean value deciding whether to return output as list of nodes. Optional: default=False\n
-    :return: default.node file, which contains following information about node:\n
+    :return: lib/default2.node file, which contains following information about node:\n
         - ID\n
         - IP address\n
         - Hostname\n

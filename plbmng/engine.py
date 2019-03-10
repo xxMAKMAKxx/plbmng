@@ -129,7 +129,7 @@ def verifySshCredentialsExist():
 
 #parent function to update availability DB that controls multiple processes
 def updateAvailabilityDatabaseParent():
-    nodes = getNodes()
+    nodes = getNodes(False)
     increment = Value('f',0)
     increment.value = float(100/len(nodes))
     base = Value('f',0)
@@ -214,14 +214,37 @@ def getPasswd():
                 passwd=(re.sub('PASSWORD=','',line)).rstrip()
     return passwd
 
-def getNodes(nodeFile=None):
-    if nodeFile == None:
-        nodeFile=path+'/database/default.node'
+def getNodes(checkConfiguration=True):
+    # Initialize filtering settings
+    db = sqlite3.connect('database/internal.db')
+    cursor = db.cursor()
+    cursor.execute('SELECT * from configuration where senabled=\'T\';')
+    configuration = cursor.fetchall()
+    if not configuration:
+        sql = 'select shostname from availability'
+    else:
+        sql = 'select shostname from availability where'
+        for item in configuration:
+            sql = sql + ' b'+item[1]+'=\'T\''
+    cursor.execute(sql)
+    returnedValuesSql = cursor.fetchall()
+    #convert returned tuples to list
+    serverList=[]
+    for item in returnedValuesSql:
+        serverList.append(item[0])
+    #open node file and append to the nodes if the element exists in the serverList
+    nodeFile=path+'/database/default.node'
     nodes=[]
     with open(nodeFile, 'r') as defaultNodeFile:
         lines=defaultNodeFile.readlines()[1:]
         for line in lines:
-            nodes.append(line.strip().split())
+            if(checkConfiguration == True):
+                if(line.strip().split()[2] in serverList):
+                    nodes.append(line.strip().split())
+            else:
+                nodes.append(line.strip().split())
+    #clean up block
+    db.close()
     return nodes
 
 def getAllNodes():
