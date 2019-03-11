@@ -61,7 +61,7 @@ def crontabScript():
     exit(0)
 
 def testPing(target, returnbool=False):
-    pingPacketWaitTime=300
+    pingPacketWaitTime=800
     if system().lower()=='windows':
         pingParam='-n'
     else:
@@ -225,7 +225,10 @@ def getNodes(checkConfiguration=True):
     else:
         sql = 'select shostname from availability where'
         for item in configuration:
-            sql = sql + ' b'+item[1]+'=\'T\''
+            if (re.match(r'.*where$', sql)):
+                sql = sql + ' b'+item[1]+'=\'T\''
+            else:
+                sql = sql + ' and b'+item[1]+'=\'T\''
     cursor.execute(sql)
     returnedValuesSql = cursor.fetchall()
     #convert returned tuples to list
@@ -300,6 +303,7 @@ def searchNodes(option,regex=None):
     #parse data based on incoming regex
     if option != 0:
         for item in nodes:
+            print(item[option])
             if re.search(regex,item[option]):
                 answers.append(item)
         if len(answers) == 0:
