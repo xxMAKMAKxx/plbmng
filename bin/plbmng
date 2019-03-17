@@ -4,6 +4,8 @@ import sys
 
 if len(sys.argv) > 1:
     if(str(sys.argv[1]) == 'crontab'):
-        engine.crontabScript()
+        engine.updateAvailabilityDatabaseParent('cron')
         exit(0)
+
+
 engine.initInterface()
