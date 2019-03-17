@@ -3,15 +3,12 @@
 #License: MIT
 # For my Diploma thesis at Faculty of Electrical Engineering -- Brno, University of Technology
 
-# Set PATH for local libraries
 import webbrowser
 import folium
 import subprocess
 import signal
 import re
 import locale
-from lib import full_map
-from lib import port_scanner
 from dialog import Dialog
 import hashlib
 import sqlite3
@@ -20,11 +17,13 @@ from multiprocessing import Pool, Lock, Value
 import sys
 import os
 import csv
-sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
-# system imports
 
 # local imports
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+from lib import full_map
+from lib import port_scanner
+
 
 # Constant definition
 OPTION_LOCATION = 0
