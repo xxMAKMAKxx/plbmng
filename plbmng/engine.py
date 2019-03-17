@@ -38,7 +38,7 @@ OPTION_URL = 7
 OPTION_NAME = 8
 OPTION_LAT = 9
 OPTION_LON = 10
-VERSION = "0.2.3"
+VERSION = "0.3"
 
 #global variables
 base = None

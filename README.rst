@@ -10,6 +10,8 @@ For this purpose there are several tools within this project:
         - to get all the servers and gather all available information about them
         - to create a map with location of the servers
         - to set-up a cron job which gets infromation about latency and/or ssh availability for the selected servers
+        - to gather information about which servers are available
+        - to filter servers to only those who are available
 
 Dependencies
 ------------
@@ -20,8 +22,8 @@ Dependencies
                 - numpy
                 - vincent
                 - pandas
-		- paramiko
-		- pythondialog
+		        - paramiko
+		        - pythondialog
 
 Instalation
 -----------
