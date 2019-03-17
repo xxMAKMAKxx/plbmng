@@ -143,7 +143,7 @@ def verifySshCredentialsExist():
 
 def updateAvailabilityDatabaseParent(mode=None):
     if mode == 'cron':
-        path=getPath()
+        path = getPath()
     nodes = getNodes(False)
     increment = Value('f', 0)
     increment.value = float(100/len(nodes))
@@ -279,7 +279,7 @@ def getNodes(checkConfiguration=True, chooseAvailabilityOption=None):
                     if line[2] in serverList:
                         nodes.append(line)
                 else:
-                     nodes.append(line)
+                    nodes.append(line)
             except ValueError:
                 pass
     # clean up block
@@ -355,7 +355,7 @@ def searchNodes(option, regex=None):
                 choices.append((str(counter), item[option]))
                 counter += 1
             returnedChoice = searchNodesGui(choices)
-    #LOCATION based search
+    # LOCATION based search
     else:
         for item in nodes:
             answers.append(item[OPTION_CONTINENT])
@@ -416,7 +416,7 @@ def connect(mode, node):
     user = getSshUser()
     if mode == 1:
         return_value = os.system(
-             "ssh -o \"StrictHostKeyChecking = no\" -o \"UserKnownHostsFile=\
+            "ssh -o \"StrictHostKeyChecking = no\" -o \"UserKnownHostsFile=\
             /dev/null\" -i "+key+" "+user+"@"+node[OPTION_IP])
         if return_value is not 0:
             d.msgbox("Error while connecting. Please verify your credentials.")
@@ -468,7 +468,8 @@ def plotServersOnMap(mode):
     with open('/tmp/base_data.txt', "w") as baseDataFile:
         for node in nodes:
             baseDataFile.write(node[2]+'\t'+node[-2]+'\t'+node[-1]+'\n')
-    os.system('cat /tmp/base_data.txt | sort -n -k2 -u > '+path+'/lib/base_data.txt')
+    os.system('cat /tmp/base_data.txt | sort -n -k2 -u > ' +
+              path+'/lib/base_data.txt')
     full_map.plot_server_on_map()
     mapFile = "map_full.html"
     try:
@@ -547,8 +548,10 @@ def getInfoFromNode(node):
     lon = node[10]
     return region, city, url, fullname, lat, lon
 
+
 def removeCron():
     os.system("crontab -l | grep -v \"plbmng crontab\" | crontab -")
+
 
 def addToCron(mode):
     if int(mode) == 2:
