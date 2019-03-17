@@ -332,8 +332,8 @@ def updateLastServerAccess(infoAboutNodeDic, chosenNode):
 def getLastServerAccess():
     lastServerFile = path+'/database/last_server.node'
     with open(lastServerFile, 'r') as lastServerFile:
-        lastServer = eval(lastServerFile.read().strip('\n'))
-    return lastServer
+        infoAboutNodeDic, chosenNode = eval(lastServerFile.read().strip('\n'))
+    return infoAboutNodeDic, chosenNode
 
 
 def searchNodes(option, regex=None):
