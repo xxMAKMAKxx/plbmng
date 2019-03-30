@@ -650,7 +650,7 @@ def initInterface():
         code, tag = d.menu("Choose one of the following options:",
                            choices=[("1", "Access servers"),
                                     ("2", "Monitor servers"),
-                                    ("3", "Plot map"),
+                                    ("3", "Plot servers on map"),
                                     ("4", "Set credentials"),
                                     ("5", "About")],
                            title="MAIN MENU")
@@ -718,7 +718,7 @@ def filteringOptionsGui():
 
 def aboutGui():
     d.msgbox("""
-            PlanetLab Server Manager is an interactive graphical enabled server inventory tool.
+            PlanetLab Server Manager
             Project supervisor:
                 Dan Komosny
             Authors:
@@ -754,9 +754,9 @@ def monitorServersGui():
         d.msgbox("Warning! Your credentials for PlanetLab API are not set. Please use 'Set credentials' option in main menu to set them.")
     while True:
         code, tag = d.menu("Choose one of the following options:",
-                           choices=[("1", "Set automatic update of availability database"),
-                                    ("2", "Update node database"),
-                                    ("3", "Update availability database")],
+                           choices=[("1", "Set crontab for status update"),
+                                    ("2", "Update server list now"),
+                                    ("3", "Update server status now")],
                            title="Monitoring menu", height=0, width=0)
         if code == d.OK:
             if tag == "1":
