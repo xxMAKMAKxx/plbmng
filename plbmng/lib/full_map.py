@@ -47,6 +47,8 @@ def plot_server_on_map(nodes=None):
 
     for node in nodes:
         name = node[2]
+        if node[-2] == 'unknown' or node[-1] == 'unknown':
+            continue
         x = float(node[-2])
         y = float(node[-1])
         text = """

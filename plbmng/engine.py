@@ -481,23 +481,11 @@ def showOnMap(node, nodeInfo=""):
     webbrowser.get().open('file://' + os.path.realpath('/tmp/map_plbmng.html'))
 
 def plotServersOnMap(mode):
-    _stderr = os.dup(2)
-    os.close(2)
-    _stdout = os.dup(1)
-    os.close(1)
-    fd = os.open(os.devnull, os.O_RDWR)
-    os.dup2(fd, 2)
-    os.dup2(fd, 1)
     # update base_data.txt file based on latest database with nodes
     nodes = getNodes(True, int(mode))
     full_map.plot_server_on_map(nodes)
     mapFile = "plbmng_server_map.html"
-    try:
-        webbrowser.get().open('file://' + os.path.realpath(path+"/"+mapFile))
-    finally:
-        os.close(fd)
-        os.dup2(_stderr, 2)
-        os.dup2(_stdout, 1)
+    webbrowser.get().open('file://' + os.path.realpath(path+"/"+mapFile))
 
 
 def getServerInfo(serverId, option, nodes=None):
