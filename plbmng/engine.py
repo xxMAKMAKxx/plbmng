@@ -312,9 +312,38 @@ def isFirstRun():
     else:
         return False
 
+def getFiltersForAccessServers():
+    sshFilter=None
+    pingFilter=None
+    db = sqlite3.connect('database/internal.db')
+    cursor = db.cursor()
+    cursor.execute('SELECT * from configuration;')
+    configuration = cursor.fetchall()
+    for item in configuration:
+        if item[1] == 'ssh':
+            if item[2] == 'T':
+                sshFilter=True
+            else:
+                sshFilter=False
+        elif item[1] == 'ping':
+            if item[2] == 'T':
+                pingFilter=True
+            else:
+                pingFilter=False
+    if sshFilter and pingFilter:
+        filterOptions = "Only SSH and ICMP available"
+    elif sshFilter and not pingFilter:
+        filterOptions = "Only SSH available"
+    elif not sshFilter and pingFilter:
+        filterOptions = "Only PING available"
+    else:
+        filterOptions = "None"
+    return filterOptions
 
 def lastServerMenu():
     infoAboutNodeDic, chosenNode = getLastServerAccess()
+    if infoAboutNodeDic == None:
+        return
     returnedChoice = printServerInfo(infoAboutNodeDic)
     if returnedChoice == None:
         return
@@ -336,9 +365,13 @@ def updateLastServerAccess(infoAboutNodeDic, chosenNode):
 
 def getLastServerAccess():
     lastServerFile = path+'/database/last_server.node'
-    with open(lastServerFile, 'r') as lastServerFile:
-        infoAboutNodeDic, chosenNode = eval(lastServerFile.read().strip('\n'))
-    return infoAboutNodeDic, chosenNode
+    try:
+        with open(lastServerFile, 'r') as lastServerFile:
+            infoAboutNodeDic, chosenNode = eval(lastServerFile.read().strip('\n'))
+        return infoAboutNodeDic, chosenNode
+    except FileNotFoundError:
+        d.msgbox("You did not access any server yet.")
+        return None, None
 
 
 def searchNodes(option, regex=None):
@@ -425,6 +458,7 @@ def connect(mode, node):
         if return_value is not 0:
             d.msgbox("Error while connecting. Please verify your credentials.")
     elif mode == 2:
+        os.system('ssh-add '+key)
         return_value = os.system("mc sh://"+user+"@"+node[OPTION_IP]+":/home")
         if return_value is not 0:
             d.msgbox("Error while connecting. Please verify your credentials.")
@@ -449,7 +483,7 @@ def showOnMap(node, nodeInfo=""):
         folium.Marker([latitude, longitude], popup=name).add_to(nodeMap)
     else:
         folium.Marker([latitude, longitude], popup=(
-            nodeInfo["text"].replace('\n', '<br>'))).add_to(nodeMap)
+            nodeInfo["text"].strip().replace('\n', '<br>'))).add_to(nodeMap)
     nodeMap.save('/tmp/map_plbmng.html')
     try:
         webbrowser.get().open('file://' + os.path.realpath('/tmp/map_plbmng.html'))
@@ -513,16 +547,12 @@ def getServerInfo(serverId, option, nodes=None):
         infoAboutNodeDic["text"] = """
             NODE: %s
             IP: %s
-            CONTINENT: %s
-            COUNTRY: %s
-            REGION: %s
-            CITY: %s
+            CONTINENT: %s, COUNTRY: %s, REGION: %s, CITY: %s
             URL: %s
             FULL NAME: %s
-            LATITUDE: %s
-            LONGITUDE: %s
-            ICMP RESPOND: %s
-            SSH AVAILABLE: %r
+            LATITUDE: %s, LONGITUDE: %s
+            CURRENT ICMP RESPOND: %s
+            CURRENT SSH AVAILABILITY: %r
             """ % (chosenOne[OPTION_DNS],
                    chosenOne[OPTION_IP],
                    chosenOne[OPTION_CONTINENT],
@@ -769,34 +799,40 @@ def monitorServersGui():
 # Acess servers part of GUI
 def accessServersGui():
     while True:
-        code, tag = d.menu("Choose one of the following options:",
-                           choices=[("1", "Serach by DNS"),
-                                    ("2", "Search by IP"),
-                                    ("3", "Search by location"),
-                                    ("4", "Access last server"),
+        filterOptions = getFiltersForAccessServers()
+        menuText= """
+        Choose one of the following options:
+        Active filters: """+filterOptions
+
+        code, tag = d.menu(menuText,
+                           choices=[
+                                    ("1", "Access last server"),
+                                    ("2", "Serach by DNS"),
+                                    ("3", "Search by IP"),
+                                    ("4", "Search by location"),
                                     ("5", "Filtering options")],
                            title="ACCESS SERVERS")
         if code == d.OK:
             # Search by DNS
-            if tag == "1":
+            if tag == "2":
                 code, answer = d.inputbox("Search for:", title="Search")
                 if code == d.OK:
                     searchNodes(OPTION_DNS, answer)
                 else:
                     continue
             # Search by IP
-            elif tag == "2":
+            elif tag == "3":
                 code, answer = d.inputbox("Search for:", title="Search")
                 if code == d.OK:
                     searchNodes(OPTION_IP, answer)
                 else:
                     continue
             # Search by location
-            elif tag == "3":
+            elif tag == "4":
                 # Grepuje se default node
                 searchNodes(OPTION_LOCATION)
             # Access last server
-            elif tag == "4":
+            elif tag == "1":
                 lastServerMenu()
             # Filtering options
             elif tag == "5":
