@@ -801,10 +801,9 @@ def accessServersGui():
     while True:
         filterOptions = getFiltersForAccessServers()
         menuText= """
-        Choose one of the following options:
-        Active filters: """+filterOptions
+        \nActive filters: """+filterOptions
 
-        code, tag = d.menu(menuText,
+        code, tag = d.menu("Choose one of the following options:"+menuText,
                            choices=[
                                     ("1", "Access last server"),
                                     ("2", "Serach by DNS"),
@@ -815,14 +814,14 @@ def accessServersGui():
         if code == d.OK:
             # Search by DNS
             if tag == "2":
-                code, answer = d.inputbox("Search for:", title="Search")
+                code, answer = d.inputbox("Search for:"+menuText, title="Search", width=0, height=0)
                 if code == d.OK:
                     searchNodes(OPTION_DNS, answer)
                 else:
                     continue
             # Search by IP
             elif tag == "3":
-                code, answer = d.inputbox("Search for:", title="Search")
+                code, answer = d.inputbox("Search for:"+menuText, title="Search", width=0, height=0)
                 if code == d.OK:
                     searchNodes(OPTION_IP, answer)
                 else:
