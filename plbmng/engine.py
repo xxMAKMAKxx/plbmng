@@ -470,16 +470,15 @@ def showOnMap(node, nodeInfo=""):
     latitude = float(node[-2])
     longitude = float(node[-1])
     name = node[OPTION_DNS]
+    popup = folium.Popup(nodeInfo["text"].strip().replace('\n', '<br>'), max_width=1000)
     nodeMap = folium.Map(location=[latitude, longitude],
                          zoom_start=2, min_zoom=2)
     if nodeInfo == "":
-        folium.Marker([latitude, longitude], popup=name).add_to(nodeMap)
+        folium.Marker([latitude, longitude], popup=popup).add_to(nodeMap)
     else:
-        folium.Marker([latitude, longitude], popup=(
-            nodeInfo["text"].strip().replace('\n', '<br>'))).add_to(nodeMap)
+        folium.Marker([latitude, longitude], popup).add_to(nodeMap)
     nodeMap.save('/tmp/map_plbmng.html')
     webbrowser.get().open('file://' + os.path.realpath('/tmp/map_plbmng.html'))
-
 
 def plotServersOnMap(mode):
     _stderr = os.dup(2)

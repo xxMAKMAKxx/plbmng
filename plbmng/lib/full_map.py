@@ -66,7 +66,8 @@ def plot_server_on_map(nodes=None):
                    node[8],
                    node[9],
                    node[10])
-        folium.Marker([x, y],popup=text.strip().replace('\n', '<br>')).add_to(map_full)
+        popup = folium.Popup(text.strip().replace('\n', '<br>'), max_width=1000)
+        folium.Marker([x, y],popup=popup).add_to(map_full)
 
     map_full.save('plbmng_server_map.html')
 
