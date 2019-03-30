@@ -5,8 +5,7 @@ import json
 import folium
 import csv
 
-
-def plot_server_on_map(text=""):
+def plot_server_on_map(nodes=None):
     """
     Creates a map of every known node and generates chart with information about their's latency.\n
     :return: map_full.html file
@@ -46,21 +45,30 @@ def plot_server_on_map(text=""):
     map_full = folium.Map(location=[45.372, -121.6972],
                           zoom_start=2)
 
-    with open('lib/base_data.txt') as tsv:
-        for row in csv.reader(tsv, delimiter='\t'):
-            try:
-                name = row[0]
-                x = float(row[1])
-                y = float(row[2])
-                print(" %s " % name)
-                if(text == ""):
-                    folium.Marker([x, y],popup=name).add_to(map_full)
-                else:
-                    folium.Marker([x, y],popup=text).add_to(map_full)
-            except ValueError:
-                pass
+    for node in nodes:
+        name = node[2]
+        x = float(node[-2])
+        y = float(node[-1])
+        text = """
+            NODE: %s, IP: %s
+            CONTINENT: %s, COUNTRY: %s
+            REGION: %s, CITY: %s
+            URL: %s
+            FULL NAME: %s
+            LATITUDE: %s, LONGITUDE: %s
+            """ % (node[2],
+                   node[1],
+                   node[3],
+                   node[4],
+                   node[5],
+                   node[6],
+                   node[7],
+                   node[8],
+                   node[9],
+                   node[10])
+        folium.Marker([x, y],popup=text.strip().replace('\n', '<br>')).add_to(map_full)
 
-    map_full.save('map_full.html')
+    map_full.save('plbmng_server_map.html')
 
 
 if __name__ == "__main__":

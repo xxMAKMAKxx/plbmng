@@ -467,13 +467,6 @@ def connect(mode, node):
 
 
 def showOnMap(node, nodeInfo=""):
-    _stderr = os.dup(2)
-    os.close(2)
-    _stdout = os.dup(1)
-    os.close(1)
-    fd = os.open(os.devnull, os.O_RDWR)
-    os.dup2(fd, 2)
-    os.dup2(fd, 1)
     latitude = float(node[-2])
     longitude = float(node[-1])
     name = node[OPTION_DNS]
@@ -485,12 +478,7 @@ def showOnMap(node, nodeInfo=""):
         folium.Marker([latitude, longitude], popup=(
             nodeInfo["text"].strip().replace('\n', '<br>'))).add_to(nodeMap)
     nodeMap.save('/tmp/map_plbmng.html')
-    try:
-        webbrowser.get().open('file://' + os.path.realpath('/tmp/map_plbmng.html'))
-    finally:
-        os.close(fd)
-        os.dup2(_stderr, 2)
-        os.dup2(_stdout, 1)
+    webbrowser.get().open('file://' + os.path.realpath('/tmp/map_plbmng.html'))
 
 
 def plotServersOnMap(mode):
@@ -503,13 +491,8 @@ def plotServersOnMap(mode):
     os.dup2(fd, 1)
     # update base_data.txt file based on latest database with nodes
     nodes = getNodes(True, int(mode))
-    with open('/tmp/base_data.txt', "w") as baseDataFile:
-        for node in nodes:
-            baseDataFile.write(node[2]+'\t'+node[-2]+'\t'+node[-1]+'\n')
-    os.system('cat /tmp/base_data.txt | sort -n -k2 -u > ' +
-              path+'/lib/base_data.txt')
-    full_map.plot_server_on_map()
-    mapFile = "map_full.html"
+    full_map.plot_server_on_map(nodes)
+    mapFile = "plbmng_server_map.html"
     try:
         webbrowser.get().open('file://' + os.path.realpath(path+"/"+mapFile))
     finally:
