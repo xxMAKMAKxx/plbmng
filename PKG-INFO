@@ -1,14 +1,13 @@
 Metadata-Version: 1.0
 Name: plbmng
-Version: 0.3.3
+Version: 0.3.2
 Summary: Tool for monitoring PlanetLab network
 Home-page: https://github.com/Andrasov/PlanetLab.git
 Author: Ivan Andrasov
 Author-email: xandra03@stud.feec.vutbr.cz
 License: MIT
 Description-Content-Type: UNKNOWN
-Description: 
-        ======
+Description: ======
         plbmng
         ======
         
