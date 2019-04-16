@@ -233,6 +233,25 @@ def getUser():
                 user = (re.sub('USERNAME=', '', line)).rstrip()
     return user
 
+def getStats():
+    # Initialize filtering settings
+    db = sqlite3.connect('database/internal.db')
+    cursor = db.cursor()
+    statDic=dict()
+
+    #get numbers of all servers in database
+    cursor.execute("select count(*) from availability;")
+    statDic["all"] = cursor.fetchall()[0][0]
+    #ssh available
+    cursor.execute("select count(*) from availability where bssh='T';")
+    statDic["ssh"] = cursor.fetchall()[0][0]
+    #ping available
+    cursor.execute("select count(*) from availability where bping='T';")
+    statDic["ping"] = cursor.fetchall()[0][0]
+    
+    # clean up block
+    db.close()
+    return statDic
 
 def getPasswd():
     passwd = ""
@@ -622,7 +641,8 @@ def initInterface():
                                     ("2", "Monitor servers"),
                                     ("3", "Plot servers on map"),
                                     ("4", "Set credentials"),
-                                    ("5", "About")],
+                                    ("5", "Statistics"),
+                                    ("6", "About")],
                            title="MAIN MENU")
 
         if code == d.OK:
@@ -639,6 +659,8 @@ def initInterface():
             elif tag == "4":
                 setCredentialasGui()
             elif tag == "5":
+                statsGui()
+            elif tag == "6":
                 aboutGui()
         else:
             clear()
@@ -685,6 +707,14 @@ def filteringOptionsGui():
     # Clean up database
     db.close()
 
+def statsGui():
+    statsDic = dict()
+    statsDic = getStats()
+    d.msgbox("""
+    Servers in database: """+str(statsDic["all"])+"""
+    Ssh available: """+str(statsDic["ssh"])+"""
+    Ping available: """+str(statsDic["ping"])+"""
+    """,width=0, height=0, title="Current statistics from last update of servers status:")
 
 def aboutGui():
     d.msgbox("""
