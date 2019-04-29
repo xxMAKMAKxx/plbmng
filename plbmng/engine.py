@@ -486,6 +486,14 @@ def connect(mode, node):
 
 
 def showOnMap(node, nodeInfo=""):
+    _stderr = os.dup(2)
+    os.close(2)
+    _stdout = os.dup(1)
+    os.close(1)
+    fd = os.open(os.devnull, os.O_RDWR)
+    os.dup2(fd, 2)
+    os.dup2(fd, 1)
+
     latitude = float(node[-2])
     longitude = float(node[-1])
     name = node[OPTION_DNS]
@@ -497,15 +505,32 @@ def showOnMap(node, nodeInfo=""):
     else:
         folium.Marker([latitude, longitude], popup).add_to(nodeMap)
     nodeMap.save('/tmp/map_plbmng.html')
-    webbrowser.get().open('file://' + os.path.realpath('/tmp/map_plbmng.html'))
+    try:
+        webbrowser.get().open('file://' + os.path.realpath('/tmp/map_plbmng.html'))
+    finally:
+        os.close(fd)
+        os.dup2(_stderr, 2)
+        os.dup2(_stdout, 1)
 
 def plotServersOnMap(mode):
+    _stderr = os.dup(2)
+    os.close(2)
+    _stdout = os.dup(1)
+    os.close(1)
+    fd = os.open(os.devnull, os.O_RDWR)
+    os.dup2(fd, 2)
+    os.dup2(fd, 1)
+
     # update base_data.txt file based on latest database with nodes
     nodes = getNodes(True, int(mode))
     full_map.plot_server_on_map(nodes)
     mapFile = "plbmng_server_map.html"
-    webbrowser.get().open('file://' + os.path.realpath(path+"/"+mapFile))
-
+    try:
+        webbrowser.get().open('file://' + os.path.realpath(path+"/"+mapFile))
+    finally:
+        os.close(fd)
+        os.dup2(_stderr, 2)
+        os.dup2(_stdout, 1)
 
 def getServerInfo(serverId, option, nodes=None):
     if nodes == None:
