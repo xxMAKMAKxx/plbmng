@@ -53,17 +53,11 @@ def plot_server_on_map(nodes=None):
         y = float(node[-1])
         text = """
             NODE: %s, IP: %s
-            CONTINENT: %s, COUNTRY: %s
-            REGION: %s, CITY: %s
             URL: %s
             FULL NAME: %s
             LATITUDE: %s, LONGITUDE: %s
             """ % (node[2],
                    node[1],
-                   node[3],
-                   node[4],
-                   node[5],
-                   node[6],
                    node[7],
                    node[8],
                    node[9],
